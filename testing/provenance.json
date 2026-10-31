@@ -1,0 +1,18 @@
+{
+  "source": "User-supplied CIT public fixtures",
+  "dataset_id": "cit-synthetic-test-v1",
+  "method": "Deterministic one-to-one ID remap, synthetic display names, weekday rotation, eight booking probes; capacities, sizes and teaching loads preserved.",
+  "weekday_mapping": {
+    "MON": "TUE",
+    "TUE": "WED",
+    "WED": "THU",
+    "THU": "FRI",
+    "FRI": "MON"
+  },
+  "source_sha256": {
+    "cit_public.json": "8351362143097f1a0d80ce91f31bd1f2d77bd7e738f8701d48ad28fdf64ba8dd",
+    "sample_disruption.json": "57a31a10e5862f37850c42a7906ea96ff095cbcf07e6ca8d3dc30e9ba1c6e3c6",
+    "sample_requests.md": "271bab688a305a0bf6de0da0a265c8a6b437e53bfb94182ea15a2ac7bbc62e31",
+    "schedule.example.json": "4ed22cfa253105e21736443b4749d9f98c71dd725b17ff5cebc01886d4de3f6c"
+  }
+}

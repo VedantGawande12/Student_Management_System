@@ -1,0 +1,24 @@
+{
+  "structural_checks": "passed",
+  "unique_ids": "passed",
+  "foreign_references": "passed",
+  "disruption_sequence_references": "passed",
+  "json_parse": "passed",
+  "counts": {
+    "rooms": 27,
+    "faculty": 40,
+    "courses": 62,
+    "student_groups": 14,
+    "sessions": 189,
+    "booking_requests": 33,
+    "exams": 41
+  },
+  "teaching_hours": 243,
+  "official_validator": "not supplied / not run",
+  "solver_feasibility": "not solved; baseline teaching instance is a bijective renaming and weekday permutation of source; disruption feasibility not proven",
+  "intentional_unsatisfiable_booking_requests": [
+    "TB-026",
+    "TB-030"
+  ],
+  "intentional_unknown_room": "TB-029"
+}

@@ -110,7 +110,7 @@ class SwitchUserRequest(BaseModel):
 
 class ParseAIRequest(BaseModel):
     text: str
-    current_day: Optional[str] = "MON"
+    current_day: Optional[str] = None
 
 class BookingSubmitRequest(BaseModel):
     title: str
@@ -469,7 +469,7 @@ async def parse_request(req: ParseAIRequest):
     parsed = await ai_service.parse_request_ai(
         raw_text=req.text,
         role=user["role"],
-        current_day=req.current_day or "MON",
+        current_day=req.current_day or ai_service.current_local_day(),
         rooms_data=state.active_data.get("rooms", [])
     )
     return parsed
@@ -592,4 +592,3 @@ def download_schedule_after():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
-

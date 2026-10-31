@@ -79,7 +79,7 @@ export async function resetDemoData(): Promise<{ status: string; message: string
   return res.json();
 }
 
-export async function parseBookingAI(text: string, current_day: string = 'MON'): Promise<AIParseResult> {
+export async function parseBookingAI(text: string, current_day?: string): Promise<AIParseResult> {
   const res = await fetch(`${API_BASE}/ai/parse-request`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -167,4 +167,3 @@ export async function explainDecision(decision: any, request: any): Promise<{ ex
   if (!res.ok) throw new Error(`Failed to explain decision: ${res.statusText}`);
   return res.json();
 }
-

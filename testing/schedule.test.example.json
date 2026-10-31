@@ -1,0 +1,84 @@
+{
+  "team": "SYNTHETIC FORMAT EXAMPLE ONLY — incomplete, not a solution",
+  "dataset_id": "cit-synthetic-test-v1",
+  "sessions": [
+    {
+      "session_id": "TS-001",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "TR-002"
+    },
+    {
+      "session_id": "TS-011",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "TR-025"
+    },
+    {
+      "session_id": "TS-181",
+      "day": "THU",
+      "start_period": 3,
+      "room_id": "TR-004"
+    },
+    {
+      "session_id": "TS-184",
+      "day": "THU",
+      "start_period": 3,
+      "room_id": "TR-006"
+    },
+    {
+      "session_id": "TS-187",
+      "day": "THU",
+      "start_period": 3,
+      "room_id": "TR-008"
+    }
+  ],
+  "fest_week": {
+    "bookings": [
+      {
+        "request_id": "TB-001",
+        "status": "approved",
+        "day": "TUE",
+        "start_period": 4,
+        "end_period": 5,
+        "room_id": "TR-001",
+        "reason": "Institute event, auditorium free"
+      },
+      {
+        "request_id": "TB-013",
+        "status": "rejected",
+        "reason": "No venue on campus seats 1,200 (largest is the TR-020 at 800)"
+      },
+      {
+        "request_id": "TB-011",
+        "status": "alternative_offered",
+        "day": "FRI",
+        "start_period": 10,
+        "end_period": 12,
+        "room_id": "TR-001",
+        "reason": "TR-018 went to the Quiz Club, who asked first; the auditorium has a stage and is free"
+      }
+    ],
+    "session_overrides": [
+      {
+        "session_id": "TS-051",
+        "day": "THU",
+        "start_period": 4,
+        "room_id": "TR-001",
+        "displaced_by": "TB-001"
+      }
+    ]
+  },
+  "exams": [
+    {
+      "exam_id": "TE-001",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "TR-001",
+        "TR-002",
+        "TR-003"
+      ]
+    }
+  ]
+}

@@ -387,9 +387,14 @@ def solve_bookings(data, base_timetable):
             cand_rooms.append(r)
             
         if not cand_rooms:
-            max_cap = max(r["capacity"] for r in data["rooms"] if "event" in r["allowed_uses"])
+            largest_venue = max(
+                (r for r in data["rooms"] if "event" in r["allowed_uses"]),
+                key=lambda room: room["capacity"],
+            )
+            max_cap = largest_venue["capacity"]
             if att > max_cap:
-                reason = f"No venue seats {att} (largest venue is OAT with capacity {max_cap})"
+                largest_venue_name = largest_venue.get("name") or largest_venue["id"]
+                reason = f"No venue seats {att} (largest venue is {largest_venue_name} with capacity {max_cap})"
             else:
                 reason = f"No venue matching required types {req_room_types} and features {sorted(req_needs)}"
             decisions.append({
@@ -565,4 +570,3 @@ def explain_infeasibility(data, disruption):
         elif t == "room_unavailable":
             explanation.append(f"Room {ch.get('room_id')} closed on {ch.get('days')}.")
     return explanation
-

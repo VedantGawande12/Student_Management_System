@@ -1,0 +1,87 @@
+{
+  "id": "synthetic-disruption-v1",
+  "dataset": "cit-synthetic-test-v1",
+  "description": "Synthetic derivative; permanent changes, all five supported change types exercised.",
+  "changes": [
+    {
+      "type": "add_faculty",
+      "faculty": {
+        "id": "TF-NEW-001",
+        "name": "Test Visiting Faculty",
+        "department": "CSE",
+        "max_hours_per_day": 4,
+        "needs_accessible": false,
+        "unavailable": [],
+        "preferences": []
+      }
+    },
+    {
+      "type": "faculty_unavailable",
+      "faculty_id": "TF-007",
+      "days": [
+        "TUE"
+      ],
+      "periods": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "reason": "Conference travel every Tuesday for the rest of the semester"
+    },
+    {
+      "type": "room_unavailable",
+      "room_id": "TR-009",
+      "days": [
+        "TUE",
+        "WED",
+        "THU",
+        "FRI",
+        "MON"
+      ],
+      "periods": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "reason": "Water leak, room closed for the rest of the semester"
+    },
+    {
+      "type": "add_session",
+      "session": {
+        "id": "TS-NEW-001",
+        "course_id": "TC-010",
+        "kind": "tutorial",
+        "groups": [
+          "TG-005"
+        ],
+        "faculty_id": "TF-NEW-001",
+        "size": 80,
+        "duration": 1,
+        "room_types": [
+          "classroom",
+          "lecture_hall",
+          "auditorium"
+        ],
+        "needs_accessible": false,
+        "basket_slot": null,
+        "fixed_slot": null
+      }
+    },
+    {
+      "type": "remove_session",
+      "session_id": "TS-001"
+    }
+  ]
+}

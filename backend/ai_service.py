@@ -1,10 +1,12 @@
 import json
 import os
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 # Day and period mappings for Chilika Institute of Technology
 WEEKDAYS = ["MON", "TUE", "WED", "THU", "FRI"]
+CALENDAR_WEEKDAYS = WEEKDAYS + ["SAT", "SUN"]
 DAY_ALIASES = {
     "mon": "MON", "monday": "MON", "somwar": "MON", "somvaar": "MON",
     "tue": "TUE", "tuesday": "TUE", "mangal": "TUE", "mangalwar": "TUE", "mangalvaar": "TUE",
@@ -36,31 +38,125 @@ def enforce_role_cap(role: str, requested_category: str) -> str:
     effective_idx = max(req_idx, cap_idx)
     return ORDER[effective_idx]
 
-def resolve_relative_day(current_day: str, phrase: str) -> str:
+def current_local_day() -> str:
+    return datetime.now(ZoneInfo("Asia/Kolkata")).strftime("%a").upper()
+
+
+def _next_schedulable_day(day: str, offset: int = 0) -> str:
+    day_index = CALENDAR_WEEKDAYS.index(day) if day in CALENDAR_WEEKDAYS else 0
+    day_index = (day_index + offset) % len(CALENDAR_WEEKDAYS)
+    while day_index >= len(WEEKDAYS):
+        day_index = (day_index + 1) % len(CALENDAR_WEEKDAYS)
+    return CALENDAR_WEEKDAYS[day_index]
+
+
+def resolve_relative_day(current_day: str | None, phrase: str) -> str:
     """
-    Resolves 'kal' (tomorrow), 'aaj' (today), or relative weekday offsets.
+    Resolves relative days against the local booking date and available weekdays.
     """
-    curr = current_day.upper()
-    curr_idx = WEEKDAYS.index(curr) if curr in WEEKDAYS else 0
+    curr = (current_day or current_local_day()).upper()
     phrase_lower = phrase.lower()
     
-    if "kal" in phrase_lower or "tomorrow" in phrase_lower:
-        # Tomorrow (wrap around MON-FRI or to next weekday)
-        next_idx = (curr_idx + 1) % len(WEEKDAYS)
-        return WEEKDAYS[next_idx]
-    if "parson" in phrase_lower or "day after tomorrow" in phrase_lower:
-        next_idx = (curr_idx + 2) % len(WEEKDAYS)
-        return WEEKDAYS[next_idx]
-    if "aaj" in phrase_lower or "today" in phrase_lower:
-        return WEEKDAYS[curr_idx]
+    if re.search(r"\b(kal|tomorrow)\b", phrase_lower):
+        return _next_schedulable_day(curr, 1)
+    if re.search(r"\b(parson|day after tomorrow)\b", phrase_lower):
+        return _next_schedulable_day(curr, 2)
+    if re.search(r"\b(aaj|today)\b", phrase_lower):
+        return _next_schedulable_day(curr)
         
     for alias, standard in DAY_ALIASES.items():
         if re.search(r'\b' + alias + r'\b', phrase_lower):
             return standard
             
-    return WEEKDAYS[curr_idx]
+    return _next_schedulable_day(curr)
 
-def rule_based_booking_parse(raw_text: str, role: str = "club", current_day: str = "MON", rooms_data: list = None) -> dict:
+
+def _recurring_days(phrase: str) -> list[str]:
+    if not re.search(r"\b(every|each|weekly)\b", phrase, re.IGNORECASE):
+        return []
+
+    aliases = sorted(DAY_ALIASES, key=len, reverse=True)
+    pattern = re.compile(r"\b(" + "|".join(map(re.escape, aliases)) + r")\b", re.IGNORECASE)
+    days = []
+    for match in pattern.finditer(phrase):
+        day = DAY_ALIASES[match.group(1).lower()]
+        if day in WEEKDAYS and day not in days:
+            days.append(day)
+    return days if len(days) > 1 else []
+
+
+def _requested_room(text: str, rooms_data: list | None) -> dict | None:
+    if not rooms_data:
+        return None
+
+    for room in sorted(rooms_data, key=lambda item: len(item["id"]), reverse=True):
+        room_id = re.escape(room["id"])
+        if re.search(r"(?<![A-Za-z0-9])" + room_id + r"(?![A-Za-z0-9])", text, re.IGNORECASE):
+            return room
+    return None
+
+
+def _apply_room_constraints(parsed: dict, raw_text: str, rooms_data: list | None) -> dict:
+    if not rooms_data:
+        return parsed
+
+    room = _requested_room(raw_text, rooms_data)
+    if room is None:
+        requested_id = parsed.get("requested_room")
+        room = next(
+            (candidate for candidate in rooms_data if candidate["id"].lower() == str(requested_id).lower()),
+            None,
+        )
+    if room is None:
+        return parsed
+
+    parsed["requested_room"] = room["id"]
+    room_types = parsed.get("room_types")
+    if not isinstance(room_types, list):
+        room_types = []
+        parsed["room_types"] = room_types
+    if room["type"] not in room_types:
+        room_types.append(room["type"])
+
+    needs = set(parsed.get("needs") or [])
+    if room.get("accessible", False) or "accessible" not in needs:
+        return parsed
+
+    required_features = needs - {"accessible"}
+    attendance = parsed.get("attendance") or 0
+    alternative = next(
+        (
+            candidate
+            for candidate in rooms_data
+            if candidate["id"] != room["id"]
+            and candidate["type"] == room["type"]
+            and candidate.get("accessible", False)
+            and candidate.get("capacity", 0) >= attendance
+            and "event" in candidate.get("allowed_uses", [])
+            and required_features <= set(candidate.get("features", []))
+        ),
+        None,
+    )
+    if alternative:
+        parsed["requested_room"] = alternative["id"]
+        parsed["room_warning"] = (
+            f"Notice: {room['id']} is not wheelchair accessible. "
+            f"Proposing {alternative['id']} instead, which meets the accessibility and capacity requirements."
+        )
+    else:
+        parsed["room_warning"] = (
+            f"Notice: {room['id']} is not wheelchair accessible, and no accessible "
+            "room of the same type meets the request requirements."
+        )
+    return parsed
+
+
+def rule_based_booking_parse(
+    raw_text: str,
+    role: str = "club",
+    current_day: str | None = None,
+    rooms_data: list | None = None,
+) -> dict:
     """
     Deterministic rule-based NLP parser for plain-language and Hinglish booking requests.
     Supports English & Hinglish (e.g., 'seminar hall kal shaam 6 baje, 2 ghante, 100 log, mic chahiye').
@@ -98,7 +194,8 @@ def rule_based_booking_parse(raw_text: str, role: str = "club", current_day: str
             duration_periods = 1
             
     # 3. Day resolution
-    day = resolve_relative_day(current_day, text_lower)
+    recurring_days = _recurring_days(text_lower)
+    day = recurring_days[0] if recurring_days else resolve_relative_day(current_day, text_lower)
     
     # 4. Period / Window resolution
     from_period = None
@@ -189,17 +286,7 @@ def rule_based_booking_parse(raw_text: str, role: str = "club", current_day: str
         needs.append("ac")
 
     # 6. Specific requested room detection & conflict warning (e.g. Request 7: SH-2 is not accessible!)
-    requested_room = None
-    room_warning = None
-    for r_cand in ["AUD", "OAT", "SH-1", "SH-2", "LH-1", "LH-2", "LH-3", "LH-4", "LH-5", "LH-6",
-                   "CR-101", "CR-102", "CR-103", "CR-104", "CR-105", "CR-201", "CR-202", "CS-LAB-1"]:
-        if re.search(r'\b' + r_cand.lower() + r'\b', text_lower):
-            requested_room = r_cand
-            break
-            
-    if requested_room == "SH-2" and "accessible" in needs:
-        room_warning = "Notice: SH-2 is not wheelchair accessible. Proposing SH-1 instead which has wheelchair accessibility."
-        requested_room = "SH-1"
+    requested_room = _requested_room(text, rooms_data)
         
     # 7. Category and Role capping
     req_category = "club_event"
@@ -226,22 +313,31 @@ def rule_based_booking_parse(raw_text: str, role: str = "club", current_day: str
     elif "after lunch" in text_lower and duration_periods <= 1:
         follow_up = "Could you confirm the exact duration and start time after lunch (e.g., 2:00 PM - 4:00 PM)?"
         
-    return {
+    parsed = {
         "attendance": attendance or 50,
         "duration_periods": duration_periods,
-        "windows": [{"day": day, "from_period": from_period, "to_period": to_period}],
+        "windows": [
+            {"day": recurring_day, "from_period": from_period, "to_period": to_period}
+            for recurring_day in (recurring_days or [day])
+        ],
         "room_types": room_types,
         "needs": needs,
-        "requested_room": requested_room,
+        "requested_room": requested_room["id"] if requested_room else None,
         "mandatory_for_groups": mandatory_for_groups,
         "requested_category": req_category,
         "effective_category": eff_category,
-        "room_warning": room_warning,
+        "room_warning": None,
         "follow_up": follow_up,
         "raw_text": raw_text
     }
+    return _apply_room_constraints(parsed, raw_text, rooms_data)
 
-async def parse_request_ai(raw_text: str, role: str = "club", current_day: str = "MON", rooms_data: list = None) -> dict:
+async def parse_request_ai(
+    raw_text: str,
+    role: str = "club",
+    current_day: str | None = None,
+    rooms_data: list | None = None,
+) -> dict:
     """
     Parses request using LLM if configured; otherwise seamlessly uses the deterministic rule-based parser.
     Always enforces role category caps and accessibility validation in Python code regardless of LLM output.
@@ -260,10 +356,10 @@ async def parse_request_ai(raw_text: str, role: str = "club", current_day: str =
 Extract structured booking details from this text:
 "{raw_text}"
 
-Current simulated day: {current_day}.
+Current local day in Asia/Kolkata: {current_day or current_local_day()}.
 Available weekdays: MON, TUE, WED, THU, FRI.
 Periods: P1 (08:00) to P9 (17:00) teaching, P10 (18:00) to P13 (22:00) events. Lunch is 13:00-14:00.
-Relative days: 'kal' means tomorrow's weekday.
+Relative days: 'kal' means tomorrow; when the target falls on a weekend, use the next available weekday.
 Return ONLY valid JSON matching this schema:
 {{
   "attendance": int or null,
@@ -292,12 +388,8 @@ Return ONLY valid JSON matching this schema:
                 parsed = json.loads(result)
                 # Strict Python security verification on top of LLM
                 parsed["effective_category"] = enforce_role_cap(role, parsed.get("requested_category", "club_event"))
-                # Check accessibility conflict
-                if parsed.get("requested_room") == "SH-2" and "accessible" in parsed.get("needs", []):
-                    parsed["requested_room"] = "SH-1"
-                    parsed["room_warning"] = "Notice: SH-2 is not wheelchair accessible. Proposing SH-1 instead."
                 parsed["raw_text"] = raw_text
-                return parsed
+                return _apply_room_constraints(parsed, raw_text, rooms_data)
     except Exception as e:
         print(f"LLM API call failed ({e}); using rule-based parser fallback.")
         

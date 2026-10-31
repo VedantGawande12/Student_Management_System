@@ -128,6 +128,11 @@ Switch between all 4 accounts with one click in the top navigation bar or log in
 
 ## Local Setup & Quickstart
 
+### Supabase schema
+The Supabase database schema is in [`supabase/schema.sql`](./supabase/schema.sql). Run it once in the Supabase SQL Editor. It creates the relational tables for institutes, users, datasets, timetables, bookings, disruptions, and audit logs, enables row-level security, and retains original dataset/schedule JSON payloads for lossless import.
+
+After applying it, create an institute row and associate user profiles and an active dataset with that institute. New Supabase Auth users receive a `faculty` profile by default; assign trusted roles such as `admin` from the Supabase dashboard. The schema is a database foundation only: this repository's FastAPI app still uses in-memory state and JSON files, so it must be connected to Supabase separately before the live website persists data there.
+
 ### Prerequisites
 - Python 3.10+
 - Node.js 18+ and npm
@@ -135,7 +140,7 @@ Switch between all 4 accounts with one click in the top navigation bar or log in
 ### 1. Backend Setup
 ```bash
 # Install Python dependencies
-pip install ortools fastapi uvicorn pydantic python-multipart httpx
+pip install ortools fastapi uvicorn pydantic python-multipart httpx tzdata
 
 # (Optional) Copy environment variables
 cp .env.example .env
