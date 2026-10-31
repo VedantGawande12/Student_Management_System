@@ -1,10 +1,12 @@
 import copy
+import hashlib
 import json
 import os
+import secrets
 import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
@@ -17,6 +19,7 @@ if BASE_DIR not in sys.path:
 import validator
 from backend import solver
 from backend import ai_service
+from backend import database
 
 app = FastAPI(title="CIT Campus Scheduling & Venue Management API", version="1.0.0")
 
@@ -30,16 +33,24 @@ app.add_middleware(
 )
 
 # -------------------------------------------------------------
-# Demo Accounts (Section 3 of Plan.md)
+# Test Credentials & Role-Based Access Control (RBAC)
 # -------------------------------------------------------------
-DEMO_ACCOUNTS = {
+PASSWORD_SALT = "cit_campus_scheduling_2026_salt"
+
+def hash_password(pwd: str) -> str:
+    return hashlib.sha256((pwd + PASSWORD_SALT).encode("utf-8")).hexdigest()
+
+TEST_ACCOUNTS = {
     "admin@cit.edu.in": {
         "email": "admin@cit.edu.in",
         "name": "Prof. Shreya Kapoor (Dean's Office)",
         "role": "admin",
         "department": "ADMIN",
         "faculty_id": "F37",
-        "badge": "Dean / Admin"
+        "badge": "Dean / Admin",
+        "password_hash": hash_password("Admin@123"),
+        "raw_password": "Admin@123",
+        "description": "Full administrative authority: CP-SAT solver execution, disruptions, DB sync, configuration."
     },
     "coord.cse@cit.edu.in": {
         "email": "coord.cse@cit.edu.in",
@@ -47,7 +58,10 @@ DEMO_ACCOUNTS = {
         "role": "department_coordinator",
         "department": "CSE",
         "faculty_id": "F01",
-        "badge": "Dept Coordinator (CSE)"
+        "badge": "Dept Coordinator (CSE)",
+        "password_hash": hash_password("Coord@123"),
+        "raw_password": "Coord@123",
+        "description": "Department coordination & venue approval powers (with strict NO self-approval enforcement)."
     },
     "f12@cit.edu.in": {
         "email": "f12@cit.edu.in",
@@ -55,7 +69,10 @@ DEMO_ACCOUNTS = {
         "role": "faculty",
         "department": "CSE",
         "faculty_id": "F12",
-        "badge": "Faculty (F12)"
+        "badge": "Faculty (F12)",
+        "password_hash": hash_password("Faculty@123"),
+        "raw_password": "Faculty@123",
+        "description": "Academic instructor: view faculty schedule, evaluate rescheduling for F12 sessions, submit academic bookings."
     },
     "dramatics@cit.edu.in": {
         "email": "dramatics@cit.edu.in",
@@ -63,9 +80,31 @@ DEMO_ACCOUNTS = {
         "role": "club",
         "department": None,
         "faculty_id": None,
-        "badge": "Club Rep (Dramatics)"
+        "badge": "Club Rep (Dramatics)",
+        "password_hash": hash_password("Club@123"),
+        "raw_password": "Club@123",
+        "description": "Student club representative: submit club festival & venue requests via AI copilot, view Fest Week slots."
     }
 }
+
+# Token Store: token -> { "user": user_dict, "created_at": iso_str }
+ACTIVE_TOKENS: Dict[str, Dict[str, Any]] = {}
+
+# Pre-seed persistent tokens for test accounts
+STATIC_TOKENS = {
+    "tok_admin_cit": "admin@cit.edu.in",
+    "tok_coord_cit": "coord.cse@cit.edu.in",
+    "tok_faculty_cit": "f12@cit.edu.in",
+    "tok_club_cit": "dramatics@cit.edu.in"
+}
+for tok, email in STATIC_TOKENS.items():
+    acc = copy.deepcopy(TEST_ACCOUNTS[email])
+    acc.pop("password_hash", None)
+    acc.pop("raw_password", None)
+    ACTIVE_TOKENS[tok] = {
+        "user": acc,
+        "created_at": datetime.now().isoformat()
+    }
 
 # -------------------------------------------------------------
 # In-Memory App State
@@ -88,23 +127,57 @@ class State:
         self.disrupted_schedule = None
         self.disruption_diff = None
         self.pending_disruption = None
-        self.current_user = DEMO_ACCOUNTS["admin@cit.edu.in"]
+        
+        # Default user (Dean/Admin)
+        default_acc = copy.deepcopy(TEST_ACCOUNTS["admin@cit.edu.in"])
+        default_acc.pop("password_hash", None)
+        default_acc.pop("raw_password", None)
+        self.current_user = default_acc
         self.audit_logs = []
         self.log_event("SYSTEM", "Initialized server state")
 
     def log_event(self, actor: str, action: str, details: Optional[Dict[str, Any]] = None):
-        self.audit_logs.insert(0, {
+        entry = {
             "timestamp": datetime.now().isoformat(),
             "actor": actor,
             "action": action,
             "details": details or {}
-        })
+        }
+        self.audit_logs.insert(0, entry)
+        database.record_audit_log(actor, action, details)
 
 state = State()
 
 # -------------------------------------------------------------
+# Authentication & Role Dependency
+# -------------------------------------------------------------
+def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
+    if authorization:
+        token = authorization
+        if token.lower().startswith("bearer "):
+            token = token[7:].strip()
+        if token in ACTIVE_TOKENS:
+            return ACTIVE_TOKENS[token]["user"]
+    # Fallback to state.current_user if token not provided
+    return state.current_user
+
+def require_role(*roles: str):
+    def role_dependency(user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+        if user.get("role") not in roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Forbidden: Action restricted to roles {roles}. Your role is '{user.get('role')}'."
+            )
+        return user
+    return role_dependency
+
+# -------------------------------------------------------------
 # Pydantic Request Models
 # -------------------------------------------------------------
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 class SwitchUserRequest(BaseModel):
     email: str
 
@@ -140,31 +213,135 @@ class FacultyChangeRequest(BaseModel):
     note: Optional[str] = ""
 
 # -------------------------------------------------------------
-# Endpoints
+# Auth Endpoints
 # -------------------------------------------------------------
 
 @app.get("/api/health")
 def health():
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
 
+@app.post("/api/auth/login")
+def login(req: LoginRequest):
+    email = req.email.strip().lower()
+    acc = TEST_ACCOUNTS.get(email)
+    if not acc:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    if hash_password(req.password) != acc["password_hash"]:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+    token = f"tok_{secrets.token_hex(24)}"
+    user_data = {
+        "email": acc["email"],
+        "name": acc["name"],
+        "role": acc["role"],
+        "department": acc.get("department"),
+        "faculty_id": acc.get("faculty_id"),
+        "badge": acc.get("badge")
+    }
+    ACTIVE_TOKENS[token] = {
+        "user": user_data,
+        "created_at": datetime.now().isoformat()
+    }
+    state.current_user = user_data
+    state.log_event(user_data["name"], f"User logged in ({user_data['role']})")
+    return {"token": token, "user": user_data}
+
+@app.post("/api/auth/logout")
+def logout(authorization: Optional[str] = Header(None)):
+    if authorization:
+        token = authorization
+        if token.lower().startswith("bearer "):
+            token = token[7:].strip()
+        ACTIVE_TOKENS.pop(token, None)
+    state.log_event("USER", "User logged out")
+    return {"status": "success", "message": "Logged out successfully"}
+
 @app.get("/api/auth/me")
-def get_current_user():
-    return state.current_user
+def get_user_me(user: Dict[str, Any] = Depends(get_current_user)):
+    return user
+
+@app.get("/api/auth/test-credentials")
+def get_test_credentials():
+    return [
+        {
+            "email": acc["email"],
+            "password": acc["raw_password"],
+            "role": acc["role"],
+            "name": acc["name"],
+            "badge": acc["badge"],
+            "description": acc["description"]
+        }
+        for acc in TEST_ACCOUNTS.values()
+    ]
 
 @app.get("/api/auth/accounts")
 def get_demo_accounts():
-    return list(DEMO_ACCOUNTS.values())
+    accounts = []
+    for acc in TEST_ACCOUNTS.values():
+        c = copy.deepcopy(acc)
+        c.pop("password_hash", None)
+        c.pop("raw_password", None)
+        accounts.append(c)
+    return accounts
 
 @app.post("/api/auth/switch")
 def switch_user(req: SwitchUserRequest):
-    if req.email not in DEMO_ACCOUNTS:
-        raise HTTPException(status_code=404, detail="Demo account not found")
-    state.current_user = DEMO_ACCOUNTS[req.email]
+    email = req.email.strip().lower()
+    if email not in TEST_ACCOUNTS:
+        raise HTTPException(status_code=404, detail="Test account not found")
+    
+    acc = copy.deepcopy(TEST_ACCOUNTS[email])
+    acc.pop("password_hash", None)
+    acc.pop("raw_password", None)
+    
+    # Generate token for seamless switch
+    token = f"tok_{secrets.token_hex(24)}"
+    ACTIVE_TOKENS[token] = {
+        "user": acc,
+        "created_at": datetime.now().isoformat()
+    }
+    state.current_user = acc
     state.log_event(state.current_user["name"], f"Switched role to {state.current_user['role']}")
-    return state.current_user
+    return {"token": token, "user": acc}
+
+# -------------------------------------------------------------
+# Database Integration Endpoints (Supabase)
+# -------------------------------------------------------------
+
+@app.get("/api/database/status")
+def database_status():
+    return database.get_database_status()
+
+@app.post("/api/database/sync")
+def sync_database(user: Dict[str, Any] = Depends(require_role("admin"))):
+    ds_res = database.sync_dataset_to_supabase(state.active_data)
+    sched_res = None
+    if state.active_schedule:
+        val_report = None
+        try:
+            val_report = validator.run(state.active_data, state.active_schedule)
+        except Exception:
+            pass
+        sched_res = database.sync_schedule_to_supabase(
+            state.active_schedule,
+            dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+            val_report=val_report
+        )
+    state.log_event(user["name"], "Triggered Supabase database synchronization")
+    return {
+        "status": "success",
+        "dataset_sync": ds_res,
+        "schedule_sync": sched_res,
+        "database_status": database.get_database_status()
+    }
+
+# -------------------------------------------------------------
+# System State & Solvers
+# -------------------------------------------------------------
 
 @app.get("/api/state")
-def get_state():
+def get_state(user: Dict[str, Any] = Depends(get_current_user)):
     # Compute validator reports
     val_report = None
     if state.active_schedule:
@@ -208,14 +385,13 @@ def get_state():
         "pending_disruption": state.pending_disruption,
         "validator_report": val_report,
         "disruption_validator_report": disruption_val_report,
-        "current_user": state.current_user,
-        "audit_logs": state.audit_logs[:50]
+        "current_user": user,
+        "audit_logs": state.audit_logs[:50],
+        "database_status": database.get_database_status()
     }
 
 @app.post("/api/schedule/generate")
-def generate_schedule():
-    if state.current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admin can trigger schedule generation")
+def generate_schedule(user: Dict[str, Any] = Depends(require_role("admin"))):
     try:
         t0 = datetime.now()
         sched = solver.solve_all(state.active_data, baseline=None, timeout_sec=25)
@@ -227,15 +403,22 @@ def generate_schedule():
             json.dump(sched, f, indent=2)
             
         elapsed = (datetime.now() - t0).total_seconds()
-        state.log_event(state.current_user["name"], f"Generated baseline timetable in {elapsed:.1f}s")
+        state.log_event(user["name"], f"Generated baseline timetable in {elapsed:.1f}s")
+        
+        # If Supabase connected, auto sync
+        val_report = validator.run(state.active_data, sched)
+        database.sync_schedule_to_supabase(
+            sched,
+            dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+            val_report=val_report
+        )
+        
         return {"status": "success", "schedule": sched}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/disruption/apply")
-def apply_disruption(disruption: Optional[Dict[str, Any]] = None):
-    if state.current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admin can apply disruption files")
+def apply_disruption(disruption: Optional[Dict[str, Any]] = None, user: Dict[str, Any] = Depends(require_role("admin"))):
     try:
         if not disruption:
             sample_path = os.path.join(BASE_DIR, "examples", "sample_disruption.json")
@@ -263,7 +446,7 @@ def apply_disruption(disruption: Optional[Dict[str, Any]] = None):
             json.dump(sched_after, f, indent=2)
             
         elapsed = (datetime.now() - t0).total_seconds()
-        state.log_event(state.current_user["name"], f"Computed disruption schedule ({diff['sessions_moved_count']} sessions moved) in {elapsed:.1f}s")
+        state.log_event(user["name"], f"Computed disruption schedule ({diff['sessions_moved_count']} sessions moved) in {elapsed:.1f}s")
         return {
             "status": "success",
             "diff": diff,
@@ -273,9 +456,7 @@ def apply_disruption(disruption: Optional[Dict[str, Any]] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/disruption/approve")
-def approve_disruption():
-    if state.current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admin can approve disruption diff")
+def approve_disruption(user: Dict[str, Any] = Depends(require_role("admin"))):
     if not state.disrupted_schedule or not state.pending_disruption:
         raise HTTPException(status_code=400, detail="No pending disruption to approve")
         
@@ -284,23 +465,29 @@ def approve_disruption():
     state.disrupted_schedule = None
     state.disruption_diff = None
     state.pending_disruption = None
-    state.log_event(state.current_user["name"], "Approved disruption changes to active timetable")
+    state.log_event(user["name"], "Approved disruption changes to active timetable")
+    
+    # Sync approved schedule to DB if connected
+    database.sync_dataset_to_supabase(state.active_data)
+    database.sync_schedule_to_supabase(
+        state.active_schedule,
+        dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+        status="active",
+        source_kind="disruption"
+    )
+    
     return {"status": "success", "message": "Disruption approved and committed to active schedule"}
 
 @app.post("/api/disruption/reject")
-def reject_disruption():
-    if state.current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admin can reject disruption diff")
+def reject_disruption(user: Dict[str, Any] = Depends(require_role("admin"))):
     state.disrupted_schedule = None
     state.disruption_diff = None
     state.pending_disruption = None
-    state.log_event(state.current_user["name"], "Rejected pending disruption changes")
+    state.log_event(user["name"], "Rejected pending disruption changes")
     return {"status": "success", "message": "Disruption rejected and discarded"}
 
 @app.post("/api/admin/reset")
-def reset_demo_data():
-    if state.current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admin can reset demo data")
+def reset_demo_data(user: Dict[str, Any] = Depends(require_role("admin"))):
     state.raw_data = validator.load(state.data_path)
     state.active_data = copy.deepcopy(state.raw_data)
     if os.path.exists(state.export_sched_path):
@@ -310,17 +497,14 @@ def reset_demo_data():
     state.disrupted_schedule = None
     state.disruption_diff = None
     state.pending_disruption = None
-    state.log_event(state.current_user["name"], "Reset demo data to initial state")
+    state.log_event(user["name"], "Reset demo data to initial state")
     return {"status": "success", "message": "Demo data reset successfully"}
 
 @app.post("/api/admin/upload-dataset")
-async def upload_dataset(file: UploadFile = File(...)):
-    if state.current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admin can upload new dataset")
+async def upload_dataset(file: UploadFile = File(...), user: Dict[str, Any] = Depends(require_role("admin"))):
     content = await file.read()
     try:
         data = json.loads(content.decode("utf-8"))
-        # Basic validation
         for key in ["rooms", "faculty", "student_groups", "sessions", "calendar"]:
             if key not in data:
                 raise ValueError(f"Missing required dataset section '{key}'")
@@ -330,30 +514,27 @@ async def upload_dataset(file: UploadFile = File(...)):
         state.disrupted_schedule = None
         state.disruption_diff = None
         state.pending_disruption = None
-        state.log_event(state.current_user["name"], f"Uploaded new dataset: {data.get('dataset_id', file.filename)}")
+        state.log_event(user["name"], f"Uploaded new dataset: {data.get('dataset_id', file.filename)}")
         return {"status": "success", "dataset_id": data.get("dataset_id")}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid dataset JSON: {e}")
 
 @app.post("/api/admin/upload-disruption")
-async def upload_disruption(file: UploadFile = File(...)):
-    if state.current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only Admin can upload disruption")
+async def upload_disruption(file: UploadFile = File(...), user: Dict[str, Any] = Depends(require_role("admin"))):
     content = await file.read()
     try:
         disruption = json.loads(content.decode("utf-8"))
         if "changes" not in disruption:
             raise ValueError("Disruption JSON must contain 'changes' list")
-        return apply_disruption(disruption)
+        return apply_disruption(disruption, user=user)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid disruption JSON: {e}")
 
 # -------------------------------------------------------------
-# Booking Management with No Self-Approval Guard
+# Booking Management with Strict No Self-Approval Guard
 # -------------------------------------------------------------
 @app.post("/api/bookings/submit")
-def submit_booking(req: BookingSubmitRequest):
-    user = state.current_user
+def submit_booking(req: BookingSubmitRequest, user: Dict[str, Any] = Depends(get_current_user)):
     eff_cat = ai_service.enforce_role_cap(user["role"], req.requested_category or "club_event")
     
     new_id = f"BR-{len(state.active_data.get('booking_requests', [])) + 1:02d}"
@@ -361,9 +542,10 @@ def submit_booking(req: BookingSubmitRequest):
         "id": new_id,
         "submitted_at": datetime.now().isoformat() + "+05:30",
         "requester": user["name"],
+        "requester_email": user["email"],
         "role": user["role"],
         "department": user.get("department"),
-        "requested_category": req.requested_category or "club_event",
+        "requested_category": eff_cat,
         "title": req.title,
         "attendance": req.attendance,
         "duration_periods": req.duration_periods,
@@ -387,22 +569,24 @@ def submit_booking(req: BookingSubmitRequest):
     return {"status": "success", "booking": booking}
 
 @app.post("/api/bookings/decide")
-def decide_booking(req: BookingDecideRequest):
-    user = state.current_user
+def decide_booking(
+    req: BookingDecideRequest,
+    user: Dict[str, Any] = Depends(require_role("admin", "department_coordinator"))
+):
     req_obj = next((b for b in state.active_data.get("booking_requests", []) if b["id"] == req.request_id), None)
     if not req_obj:
         raise HTTPException(status_code=404, detail="Booking request not found")
         
     # Enforce NO SELF-APPROVAL rule (requester != approver)
-    if req_obj.get("requester") == user["name"] or req_obj.get("requester") == user["email"]:
+    if (
+        req_obj.get("requester") == user["name"] or
+        req_obj.get("requester_email") == user["email"] or
+        req_obj.get("requester") == user["email"]
+    ):
         raise HTTPException(
             status_code=403,
-            detail="Conflict of Interest: Self-approval is strictly forbidden (requester != approver)."
+            detail="Conflict of Interest: Self-approval is strictly forbidden (requester != approver). Another coordinator or dean must review."
         )
-        
-    # Permission check
-    if user["role"] not in ("admin", "department_coordinator"):
-        raise HTTPException(status_code=403, detail="Only Admins or Department Coordinators can decide bookings")
         
     if not state.active_schedule:
         raise HTTPException(status_code=400, detail="No active schedule available")
@@ -414,7 +598,7 @@ def decide_booking(req: BookingDecideRequest):
     new_dec = {
         "request_id": req.request_id,
         "status": req.status,
-        "reason": req.reason or f"Manually updated by {user['name']}"
+        "reason": req.reason or f"Decided by {user['name']}"
     }
     if req.status in ("approved", "alternative_offered"):
         new_dec.update({
@@ -433,13 +617,16 @@ def decide_booking(req: BookingDecideRequest):
     return {"status": "success", "decision": new_dec}
 
 @app.post("/api/bookings/cancel")
-def cancel_booking(request_id: str):
-    user = state.current_user
+def cancel_booking(request_id: str, user: Dict[str, Any] = Depends(get_current_user)):
     req_obj = next((b for b in state.active_data.get("booking_requests", []) if b["id"] == request_id), None)
     if not req_obj:
         raise HTTPException(status_code=404, detail="Booking request not found")
         
-    if user["role"] != "admin" and req_obj.get("requester") != user["name"]:
+    if (
+        user["role"] != "admin" and
+        req_obj.get("requester") != user["name"] and
+        req_obj.get("requester_email") != user["email"]
+    ):
         raise HTTPException(status_code=403, detail="You can only cancel your own booking requests")
         
     state.active_data.setdefault("cancellations", []).append({
@@ -464,8 +651,7 @@ def cancel_booking(request_id: str):
 # AI & Copilot Endpoints
 # -------------------------------------------------------------
 @app.post("/api/ai/parse-request")
-async def parse_request(req: ParseAIRequest):
-    user = state.current_user
+async def parse_request(req: ParseAIRequest, user: Dict[str, Any] = Depends(get_current_user)):
     parsed = await ai_service.parse_request_ai(
         raw_text=req.text,
         role=user["role"],
@@ -475,12 +661,7 @@ async def parse_request(req: ParseAIRequest):
     return parsed
 
 @app.post("/api/ai/faculty-change")
-def faculty_change(req: FacultyChangeRequest):
-    """
-    Evaluates faculty schedule change request deterministically using CP-SAT.
-    Finds clash-free alternative slots or explains exact constraint conflicts.
-    """
-    user = state.current_user
+def faculty_change(req: FacultyChangeRequest, user: Dict[str, Any] = Depends(get_current_user)):
     session = next((s for s in state.active_data.get("sessions", []) if s["id"] == req.session_id), None)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")

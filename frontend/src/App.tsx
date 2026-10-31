@@ -30,10 +30,21 @@ export const App: React.FC = () => {
           await auth.changeRole(email);
           scheduleState.refreshState();
         }}
+        onLoginWithPassword={async (email, password) => {
+          await auth.loginWithPassword(email, password);
+          scheduleState.refreshState();
+        }}
+        onLogout={async () => {
+          await auth.logoutUser();
+          scheduleState.refreshState();
+        }}
         onResetData={scheduleState.reset}
         onGenerateSchedule={scheduleState.generate}
         onApplySampleDisruption={() => disruption.apply()}
         isGenerating={scheduleState.generating}
+        databaseStatus={scheduleState.appState?.database_status}
+        onSyncDatabase={scheduleState.syncDb}
+        isSyncingDb={scheduleState.syncingDb}
       />
 
       {/* 2. Official Validator HUD */}

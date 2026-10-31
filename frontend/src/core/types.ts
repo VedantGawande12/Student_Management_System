@@ -177,6 +177,26 @@ export interface AuditLog {
   details: Record<string, any>;
 }
 
+export interface TestCredential {
+  email: string;
+  password: string;
+  role: UserRole;
+  name: string;
+  badge: string;
+  description: string;
+}
+
+export interface DatabaseStatus {
+  configured: boolean;
+  connected: boolean;
+  mode: 'supabase' | 'local_fallback' | string;
+  url?: string;
+  tables_count?: Record<string, number>;
+  last_synced?: string | null;
+  message: string;
+  error?: string;
+}
+
 export interface AppStateResponse {
   dataset_summary: {
     dataset_id: string;
@@ -202,6 +222,7 @@ export interface AppStateResponse {
   disruption_validator_report: ValidatorReport | null;
   current_user: UserAccount;
   audit_logs: AuditLog[];
+  database_status?: DatabaseStatus;
 }
 
 export interface AIParseResult {

@@ -8,7 +8,12 @@ import {
   StudentGroup,
   SessionItem
 } from '../core/types';
-import { fetchState, generateSchedule as apiGenerateSchedule, resetDemoData as apiResetDemoData } from '../core/api';
+import {
+  fetchState,
+  generateSchedule as apiGenerateSchedule,
+  resetDemoData as apiResetDemoData,
+  syncDatabase as apiSyncDatabase
+} from '../core/api';
 
 export type TimetableViewMode = 'regular' | 'fest_week' | 'exams';
 export type FilterType = 'all' | 'group' | 'faculty' | 'room';
@@ -17,6 +22,7 @@ export function useSchedule() {
   const [appState, setAppState] = useState<AppStateResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [syncingDb, setSyncingDb] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Filters
@@ -65,6 +71,20 @@ export function useSchedule() {
       throw err;
     } finally {
       setLoading(false);
+    }
+  }, [refreshState]);
+
+  const syncDb = useCallback(async () => {
+    setSyncingDb(true);
+    try {
+      const res = await apiSyncDatabase();
+      await refreshState();
+      return res;
+    } catch (err: any) {
+      setError(err.message || 'Failed to sync database');
+      throw err;
+    } finally {
+      setSyncingDb(false);
     }
   }, [refreshState]);
 
@@ -126,6 +146,8 @@ export function useSchedule() {
     refreshState,
     generate,
     reset,
+    syncDb,
+    syncingDb,
     viewMode,
     setViewMode,
     filterType,
