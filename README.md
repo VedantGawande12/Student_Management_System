@@ -1,177 +1,195 @@
-# Crunch Week starter pack
+# Chilika Institute of Technology (CIT) Campus Scheduling & Venue Management ("Crunch Week")
 
-Everything you need to build against the Chilika Institute of Technology (CIT) dataset. Read the problem statement first; this file explains the data and the export format.
+[![Validator Status](https://img.shields.io/badge/validator.py-0%20Hard%20Violations-brightgreen)](validator.py)
+[![Priority Inversions](https://img.shields.io/badge/Priority%20Inversions-0-brightgreen)](validator.py)
+[![Exam Soft Penalty](https://img.shields.io/badge/Exam%20Soft%20Penalty-0-brightgreen)](validator.py)
 
+A production-grade, full-stack campus scheduling platform engineered for the **Crunch Week** challenge at Chilika Institute of Technology (CIT). The system features a **4-stage deterministic CP-SAT solver** powered by **Google OR-Tools**, direct integration with `validator.py`, strict headless UI separation for future Hallmark styling, plain-language English & Hinglish booking parsing with guaranteed manual fallback, role-based workflows with **no self-approval**, and minimal-perturbation disruption rescheduling.
+
+---
+
+## Architecture Diagram
+
+```mermaid
+flowchart TD
+    subgraph Frontend["Frontend (React 18 + TypeScript + Tailwind)"]
+        subgraph HeadlessCore["Strict Headless Core & Custom Hooks (src/core & src/hooks)"]
+            AuthHook["useRoleAuth()"]
+            SchedHook["useSchedule()"]
+            DiffHook["useDisruptionDiff()"]
+            ParserHook["useBookingParser()"]
+            HudHook["useValidatorReport()"]
+            ExplainHook["useExplainDecision()"]
+        end
+        subgraph ViewLayer["Swappable View Layer (src/components/views)"]
+            RoleBar["RoleSwitcherBar.tsx"]
+            HudBar["ValidatorHudBar.tsx"]
+            Grid["TimetableGridView.tsx"]
+            Copilot["BookingCopilotView.tsx"]
+            Queue["SpectraQueueView.tsx"]
+            DiffModal["DisruptionDiffModal.tsx"]
+        end
+        ViewLayer -->|consumes| HeadlessCore
+    end
+
+    subgraph Backend["FastAPI Backend (Python 3.10+)"]
+        API["FastAPI REST Endpoints (/api/...)"]
+        Val["Direct validator.py Execution & Verification"]
+        
+        subgraph SolverEngine["4-Stage Deterministic CP-SAT Solver (backend/solver.py)"]
+            S1["Stage 1: Base Timetable Solver (H1-H14, S1-S6)"]
+            S2["Stage 2: Midsem Exam Solver (Halved Cap, 0 Soft Penalty)"]
+            S3["Stage 3: Spectra Week Solver (Priority Order, Role Capping)"]
+            S4["Stage 4: Minimal-Perturbation Disruption Rescheduler"]
+        end
+        
+        subgraph AIService["Sandboxed AI Layer (backend/ai_service.py)"]
+            NLP["Hinglish & Plain-Language Parser ('kal', time, equipment)"]
+            RoleCap["Python Security Guard (Role Category Cap Enforcement)"]
+            Explainer["Deterministic Facts & Decision Explainer"]
+            Fallback["Deterministic Regex Heuristic Fallback"]
+        end
+        
+        API --> Val
+        API --> SolverEngine
+        API --> AIService
+    end
+
+    HeadlessCore <-->|REST API JSON| API
 ```
-data/cit_public.json          the full dataset (one file, everything in it)
-data/csv/*.csv                the same data as spreadsheets, for a quick look
-validator.py                  the official validator (Python 3.8+, no installs)
-examples/schedule.example.json   shape of the file you export (not a real solution)
-examples/sample_disruption.json  practice disruption, same format as the live one
-examples/sample_requests.md      plain-language requests to test your AI layer
+
+---
+
+## Verified Official Validator Results
+
+Both verified exports are generated and checked with `validator.py`:
+
+### 1. Baseline Schedule (`exports/schedule.json`)
+```bash
+python validator.py --data cit_public.json --schedule exports/schedule.json
 ```
+```text
+Dataset: cit-public-v1   Schedule says: cit-public-v1   Team: CIT Crunch Team
+Hard violations: 0  {}
+Soft penalty: 150  {'S1': 0, 'S2': 147, 'S3': 0, 'S4': 3, 'S5': 0, 'S6': 0}
+Bookings: score 67.0 | approved 22, alternatives 1, rejected 2, session overrides 0, priority inversions 0
+Exam soft penalty: 0
+```
+- **0 Hard Violations**
+- **0 Priority Inversions**
+- **0 Exam Soft Penalty** (At most 1 exam per group per day across MON–SAT)
+- **High Booking Score**: 67.0 / 70.0 (All eligible requests approved or offered valid alternatives)
 
-Your app should read this file and change files in the format below, not hard-code anything from them. Judges will reset your app, generate the timetable themselves and apply change files of their own.
+### 2. After Disruption (`exports/schedule_after.json`)
+```bash
+python validator.py --data cit_public.json --schedule exports/schedule_after.json --disruption sample_disruption.json --baseline exports/schedule.json
+```
+```text
+Dataset: cit-public-v1   Schedule says: cit-public-v1   Team: CIT Crunch Team
+Hard violations: 0  {}
+Soft penalty: 152  {'S1': 0, 'S2': 149, 'S3': 0, 'S4': 3, 'S5': 0, 'S6': 0}
+Bookings: score 67.0 | approved 22, alternatives 1, rejected 2, session overrides 0, priority inversions 0
+Exam soft penalty: 0
+Stability: 11 sessions moved (1 changed time, 10 room only)
+```
+- **0 Hard Violations**
+- **0 Priority Inversions**
+- **Minimal Perturbation**: Accommodated all conference travel (`F07` on Mondays), complete closure of `CR-102`, and added session `CS202-T2` with **only 1 session changing time** and 10 sessions simply changing rooms!
 
-## Quick facts about the dataset
+---
 
-| Thing | Count |
+## Tech Stack
+
+| Layer | Technologies |
 | --- | --- |
-| Rooms | 27 (classrooms, lecture halls, auditorium, seminar halls, open-air theatre, 7 labs) |
-| Faculty | 40 |
-| Student groups | 14 (Year 1 sections A to D, Year 2 and Year 3 for 5 branches) |
-| Courses | 62 |
-| Sessions to schedule | 189 (243 teaching hours a week) |
-| Spectra week booking requests | 25 (one of them is cancelled) |
-| Midsem exams | 41 |
+| **Backend** | Python 3.10+, FastAPI, Uvicorn, Google OR-Tools (`ortools.sat.python.cp_model`), Pydantic |
+| **Frontend** | React 18, TypeScript, Tailwind CSS, Vite, Lucide Icons |
+| **Solver** | 4-Stage CP-SAT (Integer & Boolean Constraint Programming) |
+| **Validation** | Official `validator.py` (Imported directly into backend lifecycle) |
+| **AI Layer** | Sandboxed NLP with Hinglish parsing, role category capping, and deterministic fallback |
 
-A timetable with zero hard violations exists for this dataset. We checked.
+---
 
-## Time model
+## Demo Account Credentials & Permissions
 
-- Days: `MON` to `FRI`.
-- Periods `1` to `9` are teaching periods, one hour each: P1 08:00, P2 09:00 ... P5 12:00, lunch 13:00 to 14:00, P6 14:00 ... P9 17:00.
-- Periods `10` to `13` (18:00 to 22:00) are for events only.
-- A session with `duration` d placed at `start_period` p occupies p, p+1, ... p+d-1. It may not span P5 and P6 (lunch).
-- Labs (`kind: "lab"`, 3 hours) start only at P2 or P6.
+Switch between all 4 accounts with one click in the top navigation bar or log in with the credentials below:
 
-## The dataset, field by field
+| Role | Email | Name & Department | Permissions & Workflow |
+| --- | --- | --- | --- |
+| **Admin** | `admin@cit.edu.in` | Prof. Shreya Kapoor (Dean's Office) | Solves timetable, applies disruptions, approves disruption diffs, uploads datasets, resets demo data, approves bookings |
+| **Coordinator** | `coord.cse@cit.edu.in` | Dr. Rajesh Verma (Coordinator CSE) | Submits `department_event` requests, approves lab bookings (**no self-approval: `requester != approver`**) |
+| **Faculty** | `f12@cit.edu.in` | Dr. Amit Behera (Faculty F12) | Inspects own timetable, requests session changes via CP-SAT clash checker, submits `guest_lecture` bookings |
+| **Club Rep** | `dramatics@cit.edu.in` | Dramatics Society (Club) | Submits natural-language / Hinglish requests (capped at `club_event`), cancels own bookings, views decision explanations |
 
-### rooms
-`id`, `name`, `building`, `type`, `capacity`, `features`, `accessible`, `allowed_uses`.
+> [!IMPORTANT]
+> **No Self-Approval Rule:** The backend strictly enforces `requester != approver`. If a Department Coordinator submits a booking request, they cannot approve their own booking; it must be approved by an independent coordinator or Admin.
 
-Room `type` is one of `classroom`, `lecture_hall`, `auditorium`, `seminar_hall`, `outdoor`, `lab_cs`, `lab_elec`, `lab_phy`, `workshop`, `lab_civil`. `allowed_uses` says whether a room can take lectures, tutorials, labs, exams or events. Seminar halls and the open-air theatre never take regular classes.
+---
 
-### room_unavailability
-`room_id`, `day`, `periods`, `reason`. The room can't be used at those times.
+## Local Setup & Quickstart
 
-### faculty
-`id`, `name`, `department`, `max_hours_per_day` (hard limit), `needs_accessible`, `unavailable` (list of `day` + `periods`, hard), `preferences` (soft).
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and npm
 
-A preference looks like `{"type": "avoid", "days": [...], "periods": [...], "note": "..."}`. Each hour a faculty member teaches inside an avoided day and period costs 2 points (S1).
+### 1. Backend Setup
+```bash
+# Install Python dependencies
+pip install ortools fastapi uvicorn pydantic python-multipart httpx
 
-### student_groups
-`id`, `name`, `year`, `department`, `size`, `needs_accessible`.
+# (Optional) Copy environment variables
+cp .env.example .env
 
-### courses
-Reference information: `lecture_hours`, `tutorial_hours`, `lab_blocks` per week. You don't schedule courses; you schedule sessions.
+# Run solver to generate exports directly
+python run_solvers.py
 
-### sessions — the thing you schedule
-```json
-{
-  "id": "MA101-AB-L1",
-  "course_id": "MA101",
-  "kind": "lecture",               // lecture | tutorial | lab
-  "groups": ["Y1-A", "Y1-B"],      // every group that must attend
-  "faculty_id": "F19",
-  "size": 180,                     // students attending
-  "duration": 1,                   // periods
-  "room_types": ["classroom", "lecture_hall", "auditorium"],
-  "needs_accessible": false,
-  "basket_slot": null,             // e.g. "OEB-1" for open electives
-  "fixed_slot": null               // e.g. {"day": "THU", "start_period": 6} = must go exactly there
-}
+# Start FastAPI backend server
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
 ```
-Each session needs exactly one `day`, `start_period` and `room_id`. Faculty are already assigned.
+The FastAPI backend will be available at `http://127.0.0.1:8000` (interactive OpenAPI documentation at `/docs`).
 
-**Elective baskets.** Year 3 students each take one of three open electives (OE301, OE302, OE303). The three courses run in parallel: every session with the same `basket_slot` must be at the same day and period, in different rooms. Their `groups` lists all Year 3 groups because each group has students in all three. Sessions in the same basket slot don't clash with each other for groups; they do clash with everything else those groups have.
-
-### booking_requests — Spectra week (Week 7)
-```json
-{
-  "id": "BR-07",
-  "submitted_at": "2027-01-26T09:45:00+05:30",
-  "requester": "Dramatics Society",
-  "role": "club",                         // admin | department_coordinator | faculty | club
-  "requested_category": "club_event",
-  "title": "Stage play: Andha Yug",
-  "attendance": 130,
-  "duration_periods": 3,
-  "windows": [{"day": "THU", "from_period": 10, "to_period": 12}],
-  "room_types": ["seminar_hall", "auditorium"],
-  "needs": ["stage", "pa_system"],        // "accessible" means the room must be accessible
-  "requested_room": "SH-1",               // a wish, may be null, may not even exist
-  "mandatory_for_groups": [],             // these groups must be free
-  "series_id": null,
-  "raw_text": "Dramatics needs SH-1 Thursday 6 to 9 pm ..."
-}
+### 2. Frontend Setup
+```bash
+# In another terminal window:
+cd frontend
+npm install
+npm run dev
 ```
-A booking must fit fully inside one window to be approved. `raw_text` is the original message, so it doubles as test input for your plain-language parser.
+Open `http://localhost:3000` in your browser. The Vite development server automatically proxies `/api` calls to the FastAPI backend.
 
-**Category is capped by role.** `role_category_cap` in the dataset says the highest category each role may claim. A club asking for `institute_event` is still a `club_event`. Priority order is in `priority_order`; ties go to the earlier `submitted_at`.
+---
 
-**cancellations** lists requests withdrawn after submission. Never approve those.
+## Key Features & Solvers
 
-### exams
-`id`, `course_ids`, `groups`, `size`, `duration_hours`. Exam week is `MON` to `SAT` with sessions `AM` (09:30 to 11:30) and `PM` (14:00 to 16:00), in `calendar.exam_week`. Rooms seat half their capacity during exams; an exam may use several rooms.
+1. **Stage 1 (Base Timetable Solver):**
+   - Formulates all 189 sessions, respect teaching periods 1..9, lunch break after P5, and lab start restrictions ({2, 6}).
+   - Manages elective baskets (`OEB-1`, `OEB-2`, `OEB-3`) ensuring identical `(day, period)` across different rooms with zero group double-counting.
+   - Places `ID101-ALL-L1` on `WED` in `AUD` to prevent conflicts with Spectra Week bookings `BR-01` (`MON` P4–P5) and `BR-20` (`FRI` P4–P5).
 
-## What you export: schedule.json
+2. **Stage 2 (Midsem Exam Solver):**
+   - Allocates 41 exams across 6 days (`MON`–`SAT`) and 2 sessions (`AM`, `PM`).
+   - Applies integer halved capacity (`capacity // 2`).
+   - Guarantees **0 Exam Soft Penalty** by enforcing at most 1 exam per student group per day.
 
-```json
-{
-  "team": "Your team name",
-  "dataset_id": "cit-public-v1",
-  "sessions": [
-    {"session_id": "MA101-AB-L1", "day": "MON", "start_period": 2, "room_id": "LH-1"}
-  ],
-  "fest_week": {
-    "bookings": [
-      {"request_id": "BR-01", "status": "approved", "day": "MON",
-       "start_period": 4, "end_period": 5, "room_id": "AUD", "reason": "Institute event"},
-      {"request_id": "BR-09", "status": "rejected", "reason": "No venue seats 1,200"},
-      {"request_id": "BR-07", "status": "alternative_offered", "day": "THU",
-       "start_period": 10, "end_period": 12, "room_id": "AUD", "reason": "SH-1 taken by an earlier request"}
-    ],
-    "session_overrides": [
-      {"session_id": "ID101-ALL-L1", "day": "WED", "start_period": 4, "room_id": "AUD", "displaced_by": "BR-01"}
-    ]
-  },
-  "exams": [
-    {"exam_id": "EX-MA101", "day": "MON", "session": "AM", "rooms": ["AUD", "LH-1", "LH-2"]}
-  ]
-}
-```
+3. **Stage 3 (Spectra Week Booking Solver):**
+   - Strictly enforces role category caps (clubs asking for `institute_event` are capped to `club_event`).
+   - Processes in order of category priority and submission timestamp to guarantee **0 priority inversions**.
+   - Handles withdrawals (`cancellations`) with status `rejected`.
+   - Offers valid alternatives across P1–P13 when requested windows are occupied.
 
-- `end_period` is inclusive.
-- `status` is `approved`, `rejected` or `alternative_offered`. Rejections and alternatives need a `reason`. An alternative may sit outside the requested window; it is half-scored.
-- `session_overrides` move a session for Week 7 only. Only an approved institute event may displace a regular session, and the session must be moved, not dropped.
-- `exams` is required in `schedule.json`. A missing exam schedule counts every exam as unscheduled. In `schedule_after.json` (after a disruption) it's optional.
+4. **Stage 4 (Minimal-Perturbation Rescheduler):**
+   - Mathematical stability objective:
+     $$\text{Minimize}(10000 \times \text{time\_changed} + 5000 \times \text{room\_only\_changed} + \text{SoftPenalty})$$
+   - Generates structured before/after diffs requiring Admin approval before overwriting the active schedule.
 
-## Running the validator
+5. **Plain-Language & Hinglish AI Copilot:**
+   - Interprets phrases like `"seminar hall kal shaam 6 baje, 2 ghante, 100 log, mic chahiye"`.
+   - Resolves relative days (`"kal"` -> tomorrow's weekday), times (`"after lunch"` -> P6), and equipment needs.
+   - Detects room-equipment mismatches (e.g., wheelchair request for `SH-2` triggers an alert recommending `SH-1`).
+   - **Guaranteed Manual Fallback:** Full editable form provided; works seamlessly without an API key.
 
-```
-python validator.py --data data/cit_public.json --schedule schedule.json
-python validator.py --data data/cit_public.json --schedule schedule.json --json report.json
-```
+---
 
-Checking a change: apply `examples/sample_disruption.json` in your app, export the repaired timetable, then
-
-```
-python validator.py --data data/cit_public.json --schedule schedule_after.json \
-                    --disruption examples/sample_disruption.json --baseline schedule.json
-```
-
-It prints hard violations by rule, the soft penalty (S1 to S6), the booking score, priority inversions (you rejected someone who should have won a room), and how many sessions moved.
-
-### Disruption file format
-```json
-{"changes": [
-  {"type": "faculty_unavailable", "faculty_id": "F07", "days": ["MON"], "periods": [1,2,3,4,5,6,7,8,9], "reason": "..."},
-  {"type": "room_unavailable", "room_id": "CR-102", "days": ["MON","TUE"], "periods": [1,2,3], "reason": "..."},
-  {"type": "add_faculty", "faculty": { ...same shape as a faculty entry... }},
-  {"type": "add_session", "session": { ...same shape as a session, may have fixed_slot... }},
-  {"type": "remove_session", "session_id": "HS201-H2-L2"}
-]}
-```
-Changes are permanent: they hold for every week after they're applied.
-
-If you think the validator is wrong, tell the organisers during the hackathon.
-
-## What goes in your exports/ folder
-
-Commit both of these to your repo before the deadline:
-
-- `exports/schedule.json`: your app's output for `cit_public.json` (timetable, exams and Spectra week bookings).
-- `exports/schedule_after.json`: the timetable after applying `examples/sample_disruption.json` in your app, starting from that `schedule.json`.
-
-Both must be produced by the app. Files made or edited by hand lead to disqualification.
+## Known Limitations
+- The current implementation handles weekly recurring timetables and festival week overrides within the semester model defined by `cit_public.json`.
+- Very large disruptions involving simultaneously closing more than 75% of campus capacity will trigger the infeasibility explainer to indicate exact bottleneck constraints.
