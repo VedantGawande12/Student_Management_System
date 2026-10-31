@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BookingRequest, BookingDecision, UserAccount } from '../../core/types';
 import { canApproveBooking, canCancelBooking } from '../../core/permissions';
 import { decideBooking, cancelBooking, explainDecision } from '../../core/api';
+import { X, HelpCircle, Check, Ban } from 'lucide-react';
 
 interface SpectraQueueViewProps {
   requests: BookingRequest[];
@@ -29,7 +30,7 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
       await decideBooking({
         request_id: req.id,
         status: 'approved',
-        reason: `Manually approved by ${currentUser?.name}`
+        reason: `Approved by ${currentUser?.name}`
       });
       onRefresh();
     } catch (e: any) {
@@ -73,23 +74,23 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-3 p-4">
+    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden space-y-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
-          <h2 className="text-base font-bold text-slate-800">
-            Spectra Week (Week 7) Venue Queue & Decisions
+          <h2 className="text-base font-bold text-slate-900">
+            Spectra week (week 7) venue queue and decisions
           </h2>
-          <p className="text-xs text-slate-500">
-            Processed strictly in priority order ({'institute_event > guest_lecture > department_event > club_event'}). 0 Priority Inversions guaranteed.
+          <p className="text-xs text-slate-500 mt-0.5">
+            Processed strictly in priority order (institute event &gt; guest lecture &gt; department event &gt; club event) with earliest submission tie-breaking. 0 priority inversions guaranteed.
           </p>
         </div>
-        <div className="text-xs bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 font-medium text-slate-600">
-          Total Requests: <strong className="text-slate-900">{requests.length}</strong>
+        <div className="text-xs bg-slate-50 px-2.5 py-1 rounded border border-slate-200 text-slate-700">
+          Total requests: <span className="font-semibold text-slate-900">{requests.length}</span>
         </div>
       </div>
 
       {actionError && (
-        <div className="bg-rose-50 border border-rose-300 rounded p-2.5 text-xs text-rose-700 font-medium">
+        <div className="bg-rose-50 border border-rose-300 rounded p-2.5 text-xs text-rose-800">
           {actionError}
         </div>
       )}
@@ -97,16 +98,16 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
       {/* Requests Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-100/75 text-slate-600 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-200">
+          <thead className="bg-slate-100/75 text-slate-700 font-medium border-b border-slate-200">
             <tr>
-              <th className="py-2.5 px-3">Req ID</th>
-              <th className="py-2.5 px-3">Event / Requester</th>
-              <th className="py-2.5 px-3">Category & Role</th>
+              <th className="py-2.5 px-3">Req id</th>
+              <th className="py-2.5 px-3">Event and requester</th>
+              <th className="py-2.5 px-3">Category and role</th>
               <th className="py-2.5 px-3">Attendance</th>
-              <th className="py-2.5 px-3">Window</th>
+              <th className="py-2.5 px-3">Requested window</th>
               <th className="py-2.5 px-3">Status</th>
-              <th className="py-2.5 px-3">Venue Assigned</th>
-              <th className="py-2.5 px-3">Decision Reason</th>
+              <th className="py-2.5 px-3">Assigned venue</th>
+              <th className="py-2.5 px-3">Decision reason</th>
               <th className="py-2.5 px-3 text-right">Actions</th>
             </tr>
           </thead>
@@ -123,9 +124,9 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
               const isSelf = req.requester === currentUser?.name || req.requester === currentUser?.email;
 
               return (
-                <tr key={req.id} className="hover:bg-slate-50 transition">
+                <tr key={req.id} className="hover:bg-slate-50 transition-colors">
                   {/* ID */}
-                  <td className="py-2.5 px-3 font-bold font-mono text-slate-800">{req.id}</td>
+                  <td className="py-2.5 px-3 font-semibold font-mono text-slate-900">{req.id}</td>
 
                   {/* Title & Requester */}
                   <td className="py-2.5 px-3">
@@ -135,18 +136,10 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
 
                   {/* Category */}
                   <td className="py-2.5 px-3">
-                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
-                      req.requested_category === 'institute_event'
-                        ? 'bg-purple-100 text-purple-800'
-                        : req.requested_category === 'guest_lecture'
-                        ? 'bg-blue-100 text-blue-800'
-                        : req.requested_category === 'department_event'
-                        ? 'bg-teal-100 text-teal-800'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}>
+                    <span className="inline-block px-1.5 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-800 border border-slate-200">
                       {req.requested_category.replace('_', ' ')}
                     </span>
-                    <div className="text-[10px] text-slate-400 capitalize mt-0.5">Role: {req.role}</div>
+                    <div className="text-[10px] text-slate-500 mt-0.5">Role: {req.role}</div>
                   </td>
 
                   {/* Attendance */}
@@ -157,34 +150,34 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
                   {/* Windows */}
                   <td className="py-2.5 px-3 text-slate-600 font-mono text-[11px]">
                     {req.windows.map((w, idx) => (
-                      <div key={idx}>{w.day} P{w.from_period}–P{w.to_period}</div>
+                      <div key={idx}>{w.day} Period {w.from_period}–{w.to_period}</div>
                     ))}
                   </td>
 
                   {/* Status Badge */}
                   <td className="py-2.5 px-3">
                     {isApproved && (
-                      <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+                      <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-medium text-[11px] border border-emerald-300">
                         Approved
                       </span>
                     )}
                     {isAlt && (
-                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px] border border-amber-300" title="Alternative Offered (0.5x score)">
+                      <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-medium text-[11px] border border-amber-300" title="Alternative offered (0.5x category weight)">
                         Alternative
                       </span>
                     )}
                     {isRejected && (
-                      <span className="px-2 py-0.5 rounded bg-rose-100 text-rose-800 font-bold text-[10px] border border-rose-300">
+                      <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-800 font-medium text-[11px] border border-rose-300">
                         Rejected
                       </span>
                     )}
                   </td>
 
-                  {/* Venue Assigned */}
-                  <td className="py-2.5 px-3 font-mono font-medium text-slate-800">
+                  {/* Assigned Venue */}
+                  <td className="py-2.5 px-3 font-mono text-slate-800">
                     {dec?.room_id ? (
                       <div>
-                        <span className="font-bold text-blue-700">{dec.room_id}</span>
+                        <span className="font-semibold text-blue-900">{dec.room_id}</span>
                         <span className="text-[10px] text-slate-500 ml-1">
                           ({dec.day} P{dec.start_period}–P{dec.end_period})
                         </span>
@@ -204,16 +197,17 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
                     <div className="flex items-center justify-end gap-1.5">
                       <button
                         onClick={() => handleExplain(req, dec)}
-                        className="px-2 py-1 text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium transition"
-                        title="View AI / deterministic explanation"
+                        className="inline-flex items-center gap-1 px-2 py-1 text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 rounded border border-slate-200 transition-colors"
+                        title="Explain decision"
                       >
-                        Explain
+                        <HelpCircle className="w-3 h-3 text-slate-500" />
+                        <span>Explain</span>
                       </button>
 
                       {allowCancel && status !== 'rejected' && (
                         <button
                           onClick={() => handleCancel(req)}
-                          className="px-2 py-1 text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded font-medium transition"
+                          className="px-2 py-1 text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded transition-colors"
                         >
                           Cancel
                         </button>
@@ -221,8 +215,8 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
 
                       {/* No self-approval indicator */}
                       {isSelf && currentUser?.role !== 'admin' && (
-                        <span className="text-[10px] text-slate-400 italic" title="Self-approval forbidden">
-                          Own req
+                        <span className="text-[10px] text-slate-400 italic" title="Self-approval forbidden (requester != approver)">
+                          Own request
                         </span>
                       )}
                     </div>
@@ -234,28 +228,28 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
         </table>
       </div>
 
-      {/* Explanation Modal */}
+      {/* Decision Explanation Modal */}
       {explainingId && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-xl border border-slate-200 max-w-md w-full p-5 space-y-3">
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg border border-slate-200 max-w-md w-full p-5 space-y-3 shadow-xl">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <h3 className="text-sm font-bold text-slate-800">
-                Decision Explanation: {explainingId}
-              </h3>
+              <div className="text-sm font-bold text-slate-900">
+                Decision explanation: {explainingId}
+              </div>
               <button
                 onClick={() => setExplainingId(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-lg"
+                className="text-slate-400 hover:text-slate-600 p-1"
               >
-                &times;
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-200">
+            <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded border border-slate-200">
               {explanationText || 'Computing explanation...'}
             </p>
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setExplainingId(null)}
-                className="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-semibold"
+                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-medium transition-colors"
               >
                 Close
               </button>
@@ -266,4 +260,3 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
     </div>
   );
 };
-

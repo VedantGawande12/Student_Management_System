@@ -11,6 +11,8 @@ import { BookingCopilotView } from './components/views/BookingCopilotView';
 import { SpectraQueueView } from './components/views/SpectraQueueView';
 import { DisruptionDiffModal } from './components/views/DisruptionDiffModal';
 
+import { Calendar, Sparkles, Clock, FileText } from 'lucide-react';
+
 export const App: React.FC = () => {
   const scheduleState = useSchedule();
   const auth = useRoleAuth(scheduleState.appState?.current_user);
@@ -21,7 +23,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
-      {/* 1. Role Switcher Top Bar */}
+      {/* 1. Institutional Role & Action Bar */}
       <RoleSwitcherBar
         currentUser={auth.currentUser || scheduleState.appState?.current_user || null}
         onSwitchUser={async (email) => {
@@ -34,73 +36,77 @@ export const App: React.FC = () => {
         isGenerating={scheduleState.generating}
       />
 
-      {/* 2. Live Validator HUD Bar */}
+      {/* 2. Official Validator HUD */}
       <ValidatorHudBar
         report={validatorHud.report}
         hasAfterSchedule={!!scheduleState.appState?.disrupted_schedule}
       />
 
-      {/* 3. Main Navigation Sub-Bar */}
+      {/* 3. Section Navigation Tabs */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
           <nav className="flex items-center gap-6">
             <button
               onClick={() => setActiveTab('timetable')}
-              className={`py-3 text-xs font-bold border-b-2 transition ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition-colors ${
                 activeTab === 'timetable'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-blue-700 text-blue-700'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
-              📅 Schedule & Exams
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Schedule & exams</span>
             </button>
             <button
               onClick={() => setActiveTab('copilot')}
-              className={`py-3 text-xs font-bold border-b-2 transition ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition-colors ${
                 activeTab === 'copilot'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-blue-700 text-blue-700'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
-              🤖 Booking Copilot (AI)
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Booking copilot</span>
             </button>
             <button
               onClick={() => setActiveTab('spectra')}
-              className={`py-3 text-xs font-bold border-b-2 transition ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition-colors ${
                 activeTab === 'spectra'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-blue-700 text-blue-700'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
-              🎪 Spectra Week Queue ({scheduleState.bookings.length})
+              <Clock className="w-3.5 h-3.5" />
+              <span>Spectra week queue ({scheduleState.bookings.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('audit')}
-              className={`py-3 text-xs font-bold border-b-2 transition ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 transition-colors ${
                 activeTab === 'audit'
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'border-blue-700 text-blue-700'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
-              📋 Audit Trail
+              <FileText className="w-3.5 h-3.5" />
+              <span>Audit trail</span>
             </button>
           </nav>
 
-          {/* Quick Notice */}
-          <div className="hidden sm:flex items-center gap-2 text-[11px] text-slate-400">
-            <span>Dataset: <strong>{scheduleState.appState?.dataset_summary?.dataset_id || 'cit-public-v1'}</strong></span>
-            <span>•</span>
-            <span>Sessions: <strong>{scheduleState.appState?.dataset_summary?.sessions_count || 189}</strong></span>
+          {/* Institutional Metadata Tag */}
+          <div className="hidden sm:flex items-center gap-3 text-xs text-slate-500">
+            <span>Dataset: <span className="font-medium text-slate-800">{scheduleState.appState?.dataset_summary?.dataset_id || 'cit-public-v1'}</span></span>
+            <span>/</span>
+            <span>Sessions: <span className="font-medium text-slate-800">{scheduleState.appState?.dataset_summary?.sessions_count || 189}</span></span>
           </div>
         </div>
       </div>
 
-      {/* 4. Tab Views Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
+      {/* 4. Main Views Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-5">
         {scheduleState.loading ? (
-          <div className="h-64 flex flex-col items-center justify-center gap-3 text-slate-400">
-            <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-medium">Loading schedule state from FastAPI backend...</p>
+          <div className="h-64 flex flex-col items-center justify-center gap-2 text-slate-500 text-xs">
+            <div className="w-6 h-6 border-2 border-slate-300 border-t-blue-700 rounded-full animate-spin"></div>
+            <span>Loading schedule state...</span>
           </div>
         ) : (
           <>
@@ -139,16 +145,16 @@ export const App: React.FC = () => {
             )}
 
             {activeTab === 'audit' && (
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
-                <h3 className="font-bold text-slate-800 text-sm">System Audit Logs</h3>
+              <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-3">
+                <div className="font-semibold text-slate-900 text-xs">System audit logs</div>
                 <div className="divide-y divide-slate-100 text-xs">
                   {(scheduleState.appState?.audit_logs || []).map((log, idx) => (
                     <div key={idx} className="py-2.5 flex items-start justify-between gap-3">
                       <div>
-                        <span className="font-semibold text-slate-900">{log.actor}:</span>{' '}
+                        <span className="font-medium text-slate-900">{log.actor}:</span>{' '}
                         <span className="text-slate-700">{log.action}</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 whitespace-nowrap font-mono">
+                      <div className="text-[11px] text-slate-400 font-mono">
                         {new Date(log.timestamp).toLocaleTimeString()}
                       </div>
                     </div>
@@ -173,4 +179,3 @@ export const App: React.FC = () => {
     </div>
   );
 };
-

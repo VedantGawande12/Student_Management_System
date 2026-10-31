@@ -1,109 +1,64 @@
 # ROLE & OBJECTIVE
-Build a full-stack web platform for **Chilika Institute of Technology (CIT) Campus Scheduling and Venue Management ("Crunch Week")**. 
-You have access to the starter pack files in the workspace: `cit_public.json`, `validator.py`, `sample_disruption.json`, `sample_requests.md`, and `schedule.example.json`.
+Use the **Hallmark (`Nutlope/hallmark`)** design skill to completely redesign and polish the frontend UI layer of our **CIT Campus Scheduling & Venue Management ("Crunch Week")** platform.
 
-CRITICAL RULE: `validator.py` is the ultimate source of truth. Every generated schedule, exam plan, booking decision, and disruption reschedule MUST score **0 hard violations** and minimize soft penalties when checked by `validator.py`. Never hard-code solutions; judges will reset the app, generate from scratch, and upload unseen disruption files and tricky natural-language prompts.
-
----
-
-# 1. STRICT HEADLESS UI SEPARATION (FOR HALLMARK SKILL REDESIGN)
-We will later redesign the entire frontend aesthetic using the `https://github.com/Nutlope/hallmark` skill. You MUST strictly decouple logic from presentation:
-1. **Headless Core & Hooks (`frontend/src/core/` & `frontend/src/hooks/`):**
-   - Put all API clients, TypeScript interfaces, role-permission guards, state machines, diff calculators, and form state inside custom headless hooks (`useSchedule()`, `useDisruptionDiff()`, `useBookingParser()`, `useRoleAuth()`, `useValidatorReport()`, `useExplainDecision()`).
-   - Zero JSX or Tailwind classes inside `src/core/` or `src/hooks/`.
-2. **Swappable View Layer (`frontend/src/components/views/`):**
-   - Build clean, functional, accessible placeholder React components that only consume the headless hooks via props/context and render semantic HTML/Tailwind.
-   - Keep every view modular (`TimetableGridView.tsx`, `BookingCopilotView.tsx`, `DisruptionDiffModal.tsx`, `SpectraQueueView.tsx`, `ValidatorHudBar.tsx`, `RoleSwitcherBar.tsx`) so the Hallmark skill can restyle the UI later without touching business logic.
+Our goal is to score a full **20/20 on UI & Design (10 marks) and Usability & Dashboard (10 marks)**. A judge who has never seen our app must be able to find a room, read a timetable, and approve a change on both laptop and phone screens using only the demo accounts[cite: 5].
 
 ---
 
-# 2. SYSTEM ARCHITECTURE
-Build a monorepo with two decoupled services:
-
-### A. `/backend` (Python 3.10+ FastAPI + Google OR-Tools `ortools`)
-1. **Direct Validator Integration:** Import and run `validator.py` functions (`run()`, `apply_disruption()`, `check_timetable()`, `soft_score()`, `check_bookings()`, `check_exams()`) directly inside FastAPI endpoints so every state change is verified before returning to the client.
-2. **4-Stage Deterministic Solver (`solver.py` using `ortools.sat.python.cp_model`):**
-
-   - **Stage 1: Base Timetable Solver (`solve_timetable`)**
-     - Schedule all 189 sessions across `MON`–`FRI`, teaching periods `1`..`9` (`LAST_TEACHING = 9`). Lunch is after period `5` (no session with duration > 1 may cross P5–P6).
-     - **Hard Constraints (H1–H14):**
-       - H1: Every session assigned exactly one `(day, start_period, room_id)`.
-       - H2/H3/H4: No faculty, student group, or room double-booking in any active period `range(start, start + duration)`.
-       - H5: `room.capacity >= session.size`.
-       - H6: `room.type in session.room_types`.
-       - H7/H8: Respect `faculty.unavailable` and `room_unavailability`.
-       - H9: `1 <= start` and `start + duration - 1 <= 9`; never cross `lunch` (`after_period: 5`); if `session.kind == "lab"`, `start_period` MUST be in `calendar.lab_start_periods` (`{2, 6}`).
-       - H10: If `session.needs_accessible` (or faculty/group `needs_accessible`), `room.accessible` MUST be `True`.
-       - H11 (Elective Baskets): Sessions sharing the same non-null `basket_slot` (e.g., `OEB-1`, `OEB-2`, `OEB-3`) MUST be scheduled on the exact same `(day, start_period)` in different rooms. They do NOT clash with each other on shared `groups`, and count only once per group toward daily group hours.
-       - H12: Faculty total teaching hours per day `<= faculty.max_hours_per_day` (4 hours).
-       - H14: Respect `session.fixed_slot` (`day`, `start_period`) if non-null.
-       - *Spectra Week Awareness:* Note that `ID101-ALL-L1` (size 360, taught by `F37`) requires `AUD` and `F37` is only free `MON`/`WED`/`FRI` P3–P5. Prefer placing `ID101-ALL-L1` on `WED` P3–P5 (or `MON`/`FRI` P3) so `BR-01` (`MON` P4–P5) and `BR-20` (`FRI` P4–P5) don't even require displacement, while still supporting `session_overrides` if an `institute_event` displaces a regular session.
-     - **Exact Soft Penalty Objective (`soft_score` in `validator.py`):**
-       - **S1 (+2 per hour):** Faculty teaching in a period matching their `preferences` (`type == "avoid"`).
-       - **S2 (+1 per gap period):** For each `(group, day)` with classes, every empty period `p` strictly between `min(occupied_periods)` and `max(occupied_periods)` costs 1 point.
-       - **S3 (+3 per hour over 6):** For each `(group, day)`, if total hours `h > 6`, penalty is `3 * (h - 6)` (counting each `basket_slot` once per group).
-       - **S4 (+3 per duplicate lecture):** More than 1 lecture of the same `course_id` on the same `day` for the same group (`3 * (c - 1)` per group for non-basket lectures; `3 * (c - 1)` per course for basket lectures).
-       - **S5 (+1 per session):** `session.size / room.capacity < 0.4`.
-       - **S6 (+1 per session):** Session occupies period `9` (`LAST_TEACHING`).
-
-   - **Stage 2: Midsem Exam Solver (`solve_exams`)**
-     - Schedule all 41 exams across `calendar.exam_week.days` (`MON`–`SAT`) and sessions (`AM`, `PM`).
-     - Only use rooms where `"exam" in room.allowed_uses`.
-     - Effective room capacity is halved using integer division: `sum(r["capacity"] // 2 for r in rooms) >= exam["size"]`. An exam can span multiple rooms.
-     - No room or student group double-booking in the same `(day, session)`.
-     - **Zero Exam Soft Penalty:** Enforce at most 1 exam per `(group, day)` so `exam_soft_penalty` (`5 * (count - 1)`) is `0`.
-
-   - **Stage 3: Spectra Week (Week 7) Booking Solver (`solve_bookings`)**
-     - Compute `effective_category(data, req)` by capping `req["requested_category"]` with `data["role_category_cap"][req["role"]]` (e.g., `BR-12` and `BR-15` from clubs are capped to `club_event`).
-     - Requests in `cancellations` (`BR-04`) MUST receive `"status": "rejected"` with `"reason": "Cancelled by requester"` (do NOT omit them, or `validator.py` emits a warning; do NOT approve them, or rule `B3` fails).
-     - Sort remaining requests by `priority_order` (`institute_event` > `guest_lecture` > `department_event` > `club_event`), breaking ties by earliest `submitted_at` (`outranks()` in `validator.py`) to guarantee **0 priority inversions**.
-     - For each request, validate: `"event" in room["allowed_uses"]`, `room["type"] in req["room_types"]`, `room["capacity"] >= req["attendance"]`, all `req["needs"]` in `set(room["features"]) | ({"accessible"} if room["accessible"] else set())`, `1 <= start <= end <= 13`, `end - start + 1 == req["duration_periods"]`, no `room_unavailability`, no room conflict with Week 7 sessions or higher-priority bookings, and no class conflict for `req["mandatory_for_groups"]`.
-     - If an `institute_event` conflicts with a regular session and no other room works, displace that regular session into a valid Week 7 slot and record it in `fest_week.session_overrides` with `"displaced_by": req_id`.
-     - If a request fits inside one of its requested `windows` (preferring `requested_room` if valid, otherwise any valid room), set `"status": "approved"`.
-     - If no slot works inside `windows`, search all valid `(day, start_period, room_id)` across `MON`–`FRI` P1–P13 for `"status": "alternative_offered"` (worth 0.5x category weight) and populate a clear `reason`.
-     - If impossible (e.g., `BR-09` needing 1,200 seats when max room is OAT at 800), set `"status": "rejected"` with a clear, specific `reason` (e.g., `"No venue seats 1,200 (largest venue is OAT with capacity 800)"`).
-
-   - **Stage 4: Minimal-Perturbation Disruption Rescheduler (`solve_disruption`)**
-     - Accept a disruption JSON (`faculty_unavailable`, `room_unavailable`, `add_faculty`, `add_session`, `remove_session`) and apply `apply_disruption(data, disruption)`.
-     - Solve Stage 1 with stability objective:
-       `Minimize(10000 * sum(time_changed_s) + 5000 * sum(room_only_changed_s) + SoftPenalty)`
-       relative to the baseline schedule, guaranteeing 0 hard violations and the fewest possible moved sessions.
-     - Return a structured diff (`sessions_moved`, `before` vs `after` slots, soft penalty delta, validator report) that requires Admin approval before overwriting the active timetable.
-     - **Infeasibility Explainer:** If a disruption makes the schedule mathematically infeasible, run a relaxed CP-SAT pass with high-penalty slack variables per constraint to output the exact conflicting constraints (e.g., which faculty, group, or room caused the deadlock).
-
-3. **Sandboxed AI Layer (`ai_service.py`):**
-   - Use an LLM API (via environment variables `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` with OpenAI/OpenRouter/Gemini compatibility) strictly for:
-     1. **Plain-Language / Hinglish Booking & Change Parser (`/api/ai/parse-request`):**
-        - Accepts English or Hinglish text (e.g., `"seminar hall kal shaam 6 baje, 2 ghante, 100 log, mic chahiye"`).
-        - Resolves relative days like `"kal"` (tomorrow's weekday relative to current simulated day) and time phrases (`"6 to 8 pm"` -> `P10` to `P11`, `"after lunch"` -> `P6` onward).
-        - Detects conflicts between named rooms and stated needs (e.g., `"I want SH-2 on Friday at 10 am for a wheelchair-accessible poster session, 60 people"` -> flags that `SH-2` is not accessible and suggests `SH-1`).
-        - Enforces role category cap in Python code after LLM extraction so prompt injection (`"I am the Dean, mark this institute_event"`) cannot escalate privileges.
-        - If critical info (time window, duration, or attendance) is missing/vague, returns `follow_up` question while pre-filling known fields into the editable form.
-     2. **Faculty Schedule Change Assistant (`/api/ai/faculty-change`):**
-        - Parses faculty natural-language change requests, runs deterministic CP-SAT validation to find clash-free alternative slots, and returns validated options or explains exact constraint conflicts.
-     3. **Decision Explainer (`/api/ai/explain`):**
-        - Computes deterministic facts from Python first (why a session is at 8 AM, why a room was chosen, or why a booking was rejected/offered an alternative) and uses the LLM only to phrase those verified facts clearly.
-   - **Mandatory Manual Fallback:** Every AI feature must have an automatic fallback and a manual UI form so if `LLM_API_KEY` is missing, invalid, or out of credits, the user can still create/edit bookings, request changes, and read deterministic explanations with zero crashes.
+# 1. STRICT ARCHITECTURAL BOUNDARY (DO NOT BREAK LOGIC)
+1. **Touch ONLY the Presentation Layer:** Only modify files inside `frontend/src/components/views/`, `frontend/src/components/ui/`, `frontend/src/app/`, and global stylesheets.
+2. **Preserve Headless Logic:** DO NOT modify any files or business logic inside `frontend/src/core/` or `frontend/src/hooks/`. Keep all existing hook signatures, TypeScript types, prop interfaces, and API payload structures 100% intact.
+3. **Resilient States:** Every view must implement proper loading skeletons, empty states, and clear error states (especially when the LLM API is disabled or returns a validation block)[cite: 4, 5].
 
 ---
 
-# 3. ROLES, PERMISSIONS & REQUIRED WORKFLOWS
-Implement 4 demo accounts with one-click switching + login credentials, enforcing **no self-approval (`requester != approver`)**:
-1. **Admin (`admin@cit.edu.in` / Dean's Office):** Generates timetable/exams/Spectra schedule, uploads dataset & disruption JSONs, reviews & approves/rejects timetable changes and class-displacing bookings, reorders priority, exports `schedule.json` and `schedule_after.json`, and clicks **"Reset Demo Data"** to restore clean initial state.
-2. **Department Coordinator (`coord.cse@cit.edu.in`):** Requests changes for department sessions, submits `department_event` bookings, approves bookings for their department's labs (cannot approve own requests).
-3. **Faculty (`f12@cit.edu.in` - Dr. Amit Behera):** Views own timetable, marks unavailability, uses AI/manual assistant to request extra or moved sessions, submits `guest_lecture` bookings.
-4. **Club Representative (`dramatics@cit.edu.in`):** Submits plain-language or manual venue requests (capped at `club_event`), cancels own requests, views status and rejection/alternative reasons.
+# 2. HALLMARK DESIGN DIRECTION & AESTHETIC
+Apply Hallmark's signature high-craft, editorial SaaS aesthetic (inspired by Linear, Vercel, and Cal.com):
+- **Typography & Hierarchy:** Clean sans-serif UI text paired with crisp `tabular-nums` monospace fonts for all time slots (`08:00`–`22:00`), period badges (`P1`–`P13`), room codes (`LH-1`, `SH-1`, `AUD`), and validator metrics[cite: 7, 12].
+- **Surface & Borders:** Subtle layered surfaces (`bg-zinc-50/50` / `bg-zinc-950`), hairline 1px borders (`border-zinc-200/80` / `border-zinc-800`), subtle glassmorphic sticky headers, and micro-interaction transitions.
+- **Semantic Color System:**
+  - **Lectures:** Crisp Indigo/Blue tint with left accent bar.
+  - **Labs (3-hour blocks in P2–P4 or P6–P8):** Emerald/Teal tint with distinct badge[cite: 2, 7].
+  - **Tutorials:** Amber/Orange tint.
+  - **Elective Baskets (`OEB-1`, `OEB-2`, `OEB-3`):** Violet/Purple parallel-session badge[cite: 7, 12].
+  - **Spectra Week Overrides & Events (P10–P13):** Rose/Crimson highlight with "Week 7 Override" pill[cite: 7].
+  - **Midsem Exams (`AM` / `PM`):** Slate/Cyan structured cards showing split room allocations and halved capacities[cite: 2, 7].
 
 ---
 
-# 4. REQUIRED DELIVERABLES TO GENERATE NOW
-1. Build and run the Python solver on `cit_public.json` and `sample_disruption.json` immediately.
-2. Save the verified outputs to:
-   - `exports/schedule.json`
-   - `exports/schedule_after.json`
-3. Run `python validator.py --data cit_public.json --schedule exports/schedule.json` and `python validator.py --data cit_public.json --schedule exports/schedule_after.json --disruption sample_disruption.json --baseline exports/schedule.json` in the terminal and verify **0 hard violations** and **0 priority inversions** on both.
-4. Generate required documentation files:
-   - `README.md` (architecture diagram, tech stack, local setup steps, demo account credentials for all 4 roles, known limitations)
-   - `.env.example`
-   - `AI_USAGE.md` (declare all models/APIs used in product, coding assistants used during development, prompt file locations, and explicit statement that LLMs never decide schedule/booking validity)
-   - `THIRD_PARTY.md` (declare Google OR-Tools, FastAPI, Next.js, Tailwind, etc.)
+# 3. COMPONENT-BY-COMPONENT REDESIGN SPECS
+
+### A. Sticky Top Command Bar (`RoleSwitcherBar.tsx` & `ValidatorHudBar.tsx`)
+- **Live Validator HUD:** Design a sleek, real-time status pill bar in the header showing:
+  - `Hard Violations: 0` (Green pulse badge when 0, Red alert badge if > 0)[cite: 5, 11]
+  - `Soft Penalty: S1–S6 breakdown popover`[cite: 7, 11]
+  - `Booking Score & Priority Inversions: 0`[cite: 7, 11]
+  - `Stability: X Sessions Moved`[cite: 11]
+- **Instant Role Switcher (Demo Mode):** A segmented control allowing judges to switch in one click between **Admin (Dean's Office)**, **Department Coordinator**, **Faculty**, and **Club Representative** with a visual badge showing their `role_category_cap`[cite: 3, 5, 7].
+- **Admin Quick Actions:** Prominent **"Reset Demo Data"** button (with confirmation toast), **"Upload Dataset / Disruption JSON"**, and **"Export `schedule.json` / `schedule_after.json`"** buttons[cite: 4, 5, 7].
+
+### B. Master Timetable & Venue Utilization Grid (`TimetableGridView.tsx`)
+- **Multi-Pivot Filter Bar:** Instant segmented tabs + searchable comboboxes to view timetables **By Student Group** (`Y1-A` to `CE-3`), **By Faculty** (`F01` to `F40`), or **By Room** (`27 venues`), plus a toggle between **Regular Week**, **Spectra Week (Week 7)**, and **Midsem Exam Week**[cite: 1, 3, 12].
+- **Visual Time Grid:**
+  - Render `MON` to `FRI` columns (or rows) across `P1` (`08:00`) to `P9` (`17:00`), with a visually distinct shaded divider between `P5` and `P6` for **Lunch (`13:00–14:00`)**, and a collapsible evening section for **Event-Only Periods `P10–P13` (`18:00–22:00`)**[cite: 2, 7, 12].
+  - Show room utilization percentages (highlighting rooms under 40% capacity S5 penalty or near 100% capacity) and gray hatched patterns for `room_unavailability` and `faculty.unavailable` slots[cite: 1, 2, 7].
+- **"Why This Slot?" Inspector Drawer:** Clicking any scheduled session or booking opens a sleek slide-over drawer displaying the deterministic explanation (constraints satisfied, why 8 AM was chosen, room features matched)[cite: 1, 4].
+- **Mobile Responsiveness:** On phone screens (`< 768px`), automatically transform the wide 5-day grid into a swipeable Day-Tab Agenda view so judges testing on mobile never face broken horizontal scrollbars[cite: 5].
+
+### C. Natural-Language / Hinglish Booking Copilot & Manual Form (`BookingCopilotView.tsx`)
+- **Split-Pane Copilot Layout:**
+  - **Left Pane (AI Input):** Chat/prompt box with quick-fill sample chips from `sample_requests.md` (including Hinglish like *"seminar hall kal shaam 6 baje..."* and tricky room-accessibility conflict requests like *"SH-2 for wheelchair-accessible session"*)[cite: 1, 9]. If the AI detects missing info or an accessibility mismatch, render an inline amber clarification callout[cite: 9].
+  - **Right Pane (Always-Working Manual Form):** Live-synced structured booking form (`title`, `attendance`, `duration_periods`, `windows`, `room_types`, `needs` checkboxes, `requested_room`, `mandatory_for_groups`)[cite: 1, 4, 7].
+- **Guaranteed Fallback UX:** Include a visible `"Manual Form Mode"` badge/toggle so if the LLM API key fails or is offline, the user can seamlessly fill and submit the form directly through deterministic validation[cite: 4].
+
+### D. Spectra Week Priority Queue & Decision Center (`SpectraQueueView.tsx`)
+- Display all 25 Spectra Week booking requests sorted by effective priority order (`institute_event` > `guest_lecture` > `department_event` > `club_event`) and submission timestamp[cite: 3, 7, 11].
+- Show visual badges when a request's claimed category was capped by `role_category_cap` (e.g., `Club requested Institute Event -> Capped to Club Event`)[cite: 7, 12].
+- Render status pills (`Approved`, `Alternative Offered`, `Rejected`, `Cancelled`) alongside the exact human-readable `reason` and any `session_overrides` (`Displaced Session -> New Slot`)[cite: 1, 7, 10].
+
+### E. Disruption Rescheduler & Visual Diff Approval Modal (`DisruptionDiffModal.tsx`)
+- Worth 4 dedicated marks in Rescheduling for a clear change view and approval step[cite: 5]:
+  - When a disruption JSON or faculty change request is applied, display a side-by-side **Before vs. After Diff View** highlighting ONLY the moved sessions (`Session ID`, `Old Day/Period/Room` $\rightarrow$ `New Day/Period/Room`, and whether it was a time change or room-only change)[cite: 1, 5, 11].
+  - Show a metric comparison card: `Sessions Moved`, `Hard Violations (0)`, and `Soft Penalty Delta`[cite: 11].
+  - If a disruption is mathematically infeasible, render a high-visibility **Conflict Diagnostic Card** listing the exact conflicting hard constraints[cite: 1].
+  - Enforce role lock on the **"Approve & Apply Schedule"** button (disabled with tooltip if `current_user == requester` or if role is not Admin)[cite: 1, 3].
