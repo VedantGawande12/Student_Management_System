@@ -189,9 +189,12 @@ export interface TestCredential {
 export interface DatabaseStatus {
   configured: boolean;
   connected: boolean;
-  mode: 'supabase' | 'local_fallback' | string;
+  writable?: boolean;
+  mode: 'supabase' | 'rls_blocked' | 'read_only' | 'local_fallback' | string;
   url?: string;
+  key_type?: string;
   tables_count?: Record<string, number>;
+  write_error?: string | null;
   last_synced?: string | null;
   message: string;
   error?: string;

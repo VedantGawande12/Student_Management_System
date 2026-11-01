@@ -1,5 +1,6 @@
 import React from 'react';
 import { ValidatorReport } from '../../core/types';
+import { API_BASE } from '../../core/api';
 import { CheckCircle2, AlertCircle, Download } from 'lucide-react';
 
 interface ValidatorHudBarProps {
@@ -84,7 +85,7 @@ export const ValidatorHudBar: React.FC<ValidatorHudBarProps> = ({
           {/* Export Downloads */}
           <div className="flex items-center gap-1.5">
             <a
-              href="/api/export/schedule"
+              href={`${API_BASE}/export/schedule`}
               download="schedule.json"
               className="inline-flex items-center gap-1 px-2 py-1 text-slate-700 hover:text-blue-700 border border-slate-300 hover:border-slate-400 bg-white rounded font-medium transition-colors"
               title="Download exports/schedule.json"
@@ -93,7 +94,7 @@ export const ValidatorHudBar: React.FC<ValidatorHudBarProps> = ({
               <span>Baseline</span>
             </a>
             <a
-              href="/api/export/schedule-after"
+              href={`${API_BASE}/export/schedule-after`}
               download="schedule_after.json"
               className="inline-flex items-center gap-1 px-2 py-1 text-slate-700 hover:text-amber-800 border border-slate-300 hover:border-slate-400 bg-white rounded font-medium transition-colors"
               title="Download exports/schedule_after.json"

@@ -2,25 +2,22 @@ import React, { useState } from 'react';
 import { useSchedule } from './hooks/useSchedule';
 import { useRoleAuth } from './hooks/useRoleAuth';
 import { useDisruptionDiff } from './hooks/useDisruptionDiff';
-import { useValidatorReport } from './hooks/useValidatorReport';
 
 import { LoginPage } from './components/views/LoginPage';
 import { RoleSwitcherBar } from './components/views/RoleSwitcherBar';
-import { ValidatorHudBar } from './components/views/ValidatorHudBar';
 import { TimetableGridView } from './components/views/TimetableGridView';
 import { BookingCopilotView } from './components/views/BookingCopilotView';
 import { SpectraQueueView } from './components/views/SpectraQueueView';
 import { DisruptionDiffModal } from './components/views/DisruptionDiffModal';
 
-import { Calendar, Sparkles, Clock, FileText, PartyPopper, GraduationCap } from 'lucide-react';
+import { Calendar, Sparkles, Clock, FileText } from 'lucide-react';
 
 export const App: React.FC = () => {
   const scheduleState = useSchedule();
   const auth = useRoleAuth(scheduleState.appState?.current_user);
   const disruption = useDisruptionDiff(scheduleState.refreshState);
-  const validatorHud = useValidatorReport(scheduleState.appState?.validator_report || null);
 
-  const [activeTab, setActiveTab] = useState<'teaching' | 'week7' | 'exams' | 'copilot' | 'spectra' | 'audit'>('teaching');
+  const [activeTab, setActiveTab] = useState<'timetables' | 'copilot' | 'spectra' | 'audit'>('timetables');
 
   // ── Auth gate: show login page when no user is authenticated ─────────────
   if (auth.loading && !auth.currentUser) {
@@ -72,64 +69,20 @@ export const App: React.FC = () => {
         isSyncingDb={scheduleState.syncingDb}
       />
 
-      {/* 2. Official Validator HUD */}
-      <ValidatorHudBar
-        report={validatorHud.report}
-        hasAfterSchedule={!!scheduleState.appState?.disrupted_schedule}
-      />
-
-      {/* 3. Section Navigation Tabs */}
+      {/* 2. Section Navigation Tabs */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
-          <nav className="flex items-center gap-5 overflow-x-auto">
+          <nav className="flex items-center gap-6">
             <button
-              onClick={() => {
-                setActiveTab('teaching');
-                scheduleState.setViewMode('regular');
-              }}
+              onClick={() => setActiveTab('timetables')}
               className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === 'teaching'
+                activeTab === 'timetables'
                   ? 'border-blue-700 text-blue-700'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
-              <span>Teaching timetable (Weeks 1–6, 8–14)</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setActiveTab('week7');
-                scheduleState.setViewMode('fest_week');
-              }}
-              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === 'week7'
-                  ? 'border-purple-700 text-purple-700'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <PartyPopper className="w-3.5 h-3.5 text-purple-600" />
-              <span>Week 7 timetable (Spectra '27)</span>
-              {scheduleState.festDecisions.filter(d => d.status === 'approved').length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800 font-bold border border-purple-200">
-                  {scheduleState.festDecisions.filter(d => d.status === 'approved').length} events
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => {
-                setActiveTab('exams');
-                scheduleState.setViewMode('exams');
-              }}
-              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
-                activeTab === 'exams'
-                  ? 'border-blue-700 text-blue-700'
-                  : 'border-transparent text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <GraduationCap className="w-3.5 h-3.5" />
-              <span>Midsem exams (Week 8)</span>
+              <span>Timetables</span>
             </button>
 
             <button
@@ -170,7 +123,7 @@ export const App: React.FC = () => {
           </nav>
 
           {/* Institutional Metadata Tag */}
-          <div className="hidden lg:flex items-center gap-3 text-xs text-slate-500 whitespace-nowrap">
+          <div className="hidden sm:flex items-center gap-3 text-xs text-slate-500 whitespace-nowrap">
             <span>Dataset: <span className="font-medium text-slate-800">{scheduleState.appState?.dataset_summary?.dataset_id || 'cit-public-v1'}</span></span>
             <span>/</span>
             <span>Sessions: <span className="font-medium text-slate-800">{scheduleState.appState?.dataset_summary?.sessions_count || 189}</span></span>
@@ -178,7 +131,7 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Main Views Container */}
+      {/* 3. Main Views Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-5">
         {scheduleState.loading ? (
           <div className="h-64 flex flex-col items-center justify-center gap-2 text-slate-500 text-xs">
@@ -187,7 +140,7 @@ export const App: React.FC = () => {
           </div>
         ) : (
           <>
-            {(activeTab === 'teaching' || activeTab === 'week7' || activeTab === 'exams') && (
+            {activeTab === 'timetables' && (
               <TimetableGridView
                 sessions={scheduleState.activeSessions}
                 sessionMeta={scheduleState.appState?.sessions || []}
@@ -197,12 +150,7 @@ export const App: React.FC = () => {
                 exams={scheduleState.exams}
                 examsMeta={scheduleState.appState?.exams_meta}
                 viewMode={scheduleState.viewMode}
-                onViewModeChange={(mode) => {
-                  scheduleState.setViewMode(mode);
-                  if (mode === 'regular') setActiveTab('teaching');
-                  if (mode === 'fest_week') setActiveTab('week7');
-                  if (mode === 'exams') setActiveTab('exams');
-                }}
+                onViewModeChange={scheduleState.setViewMode}
                 currentUser={auth.currentUser || scheduleState.appState?.current_user || null}
                 filterType={scheduleState.filterType}
                 filterValue={scheduleState.filterValue}
@@ -212,6 +160,7 @@ export const App: React.FC = () => {
                 bookingRequests={scheduleState.bookings}
                 sessionOverrides={scheduleState.sessionOverrides}
                 lastApprovedDiff={scheduleState.lastApprovedDiff}
+                validatorReport={scheduleState.appState?.validator_report || null}
                 onRefresh={scheduleState.refreshState}
               />
             )}

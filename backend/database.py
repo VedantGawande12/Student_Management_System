@@ -1,6 +1,6 @@
 """
 Database integration module for CIT Campus Scheduling & Venue Engine.
-Connects with Supabase PostgreSQL if credentials are provided (SUPABASE_URL and SUPABASE_KEY or DATABASE_URL),
+Connects with Supabase PostgreSQL if credentials are provided (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY / SUPABASE_KEY),
 otherwise provides safe, reliable local-fallback operations using cit_public.json and exports.
 """
 
@@ -54,43 +54,88 @@ def get_supabase_client():
 def get_database_status() -> Dict[str, Any]:
     """
     Returns connection status and statistics for Supabase or local fallback mode.
+    Accurately tests both read availability and write permissions to detect RLS blocks.
     """
     client = get_supabase_client()
-    if client:
-        try:
-            # Quick ping to institutes table
-            res = client.table("institutes").select("count", count="exact").execute()
-            count = res.count if hasattr(res, "count") and res.count is not None else 1
-            return {
-                "configured": True,
-                "connected": True,
-                "mode": "supabase",
-                "url": SUPABASE_URL.split(".supabase.co")[0] + ".supabase.co" if ".supabase.co" in SUPABASE_URL else "configured",
-                "tables_count": {"institutes": count},
-                "last_synced": _last_sync_time or "Ready to sync",
-                "message": "Connected to Supabase PostgreSQL database."
-            }
-        except Exception as e:
-            return {
-                "configured": True,
-                "connected": False,
-                "mode": "local_fallback",
-                "error": str(e),
-                "last_synced": _last_sync_time,
-                "message": f"Supabase configured but ping failed ({e}). Operating in local fallback mode."
-            }
-    else:
+    if not client:
         return {
             "configured": bool(SUPABASE_URL and SUPABASE_KEY),
             "connected": False,
+            "writable": False,
             "mode": "local_fallback",
             "last_synced": _last_sync_time,
-            "message": "Running in local storage mode (add SUPABASE_URL & SUPABASE_KEY in .env to connect live DB)."
+            "message": "Running in local storage mode. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env to connect live DB."
+        }
+
+    try:
+        # 1. Check read count on core tables
+        counts: Dict[str, int] = {}
+        for tbl in ["institutes", "datasets", "rooms", "faculty", "sessions", "schedules", "booking_requests"]:
+            try:
+                res = client.table(tbl).select("count", count="exact").execute()
+                counts[tbl] = res.count if hasattr(res, "count") and res.count is not None else len(res.data or [])
+            except Exception:
+                counts[tbl] = 0
+
+        # 2. Check write capability via a safe probe
+        writable = False
+        write_error = None
+        probe_name = "CIT_HEALTHCHECK_PROBE"
+        try:
+            client.table("institutes").upsert({"name": probe_name}, on_conflict="name").execute()
+            writable = True
+            # Clean up probe row
+            try:
+                client.table("institutes").delete().eq("name", probe_name).execute()
+            except Exception:
+                pass
+        except Exception as w_err:
+            write_error = str(w_err)
+
+        is_rls_error = write_error and ("row-level security" in write_error.lower() or "42501" in write_error)
+
+        if writable:
+            mode = "supabase"
+            message = "Connected to Supabase PostgreSQL database (Read & Write operational)."
+        elif is_rls_error:
+            mode = "rls_blocked"
+            message = (
+                "Connected to Supabase, but writes are blocked by Row-Level Security (RLS error 42501). "
+                "To resolve: (1) Add SUPABASE_SERVICE_ROLE_KEY to .env, or (2) Run supabase/fix_permissions_for_backend.sql in Supabase SQL Editor."
+            )
+        else:
+            mode = "read_only"
+            message = f"Connected to Supabase in read-only mode (Write check failed: {write_error})."
+
+        return {
+            "configured": True,
+            "connected": True,
+            "writable": writable,
+            "mode": mode,
+            "url": SUPABASE_URL.split(".supabase.co")[0] + ".supabase.co" if ".supabase.co" in SUPABASE_URL else "configured",
+            "key_type": "service_role" if SUPABASE_SERVICE_ROLE_KEY else "publishable/anon",
+            "tables_count": counts,
+            "write_error": write_error if not writable else None,
+            "last_synced": _last_sync_time or ("Ready to sync" if writable else None),
+            "message": message
+        }
+    except Exception as e:
+        return {
+            "configured": True,
+            "connected": False,
+            "writable": False,
+            "mode": "local_fallback",
+            "error": str(e),
+            "last_synced": _last_sync_time,
+            "message": f"Supabase configured but connection ping failed ({e}). Operating in local fallback mode."
         }
 
 def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = None) -> Dict[str, Any]:
     """
-    Syncs the active in-memory dataset to Supabase relational tables.
+    Syncs the complete active in-memory dataset to Supabase relational tables:
+    institutes, datasets, rooms, room_unavailability, faculty, faculty_unavailability,
+    student_groups, courses, sessions, session_groups, booking_requests, booking_windows,
+    cancellations, and exams.
     """
     client = get_supabase_client()
     if not client:
@@ -106,10 +151,7 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
         dataset_id = dataset.get("dataset_id", "CIT_PUBLIC_V1")
 
         # 1. Upsert Institute
-        inst_res = client.table("institutes").upsert({
-            "name": inst_name
-        }, on_conflict="name").execute()
-        
+        client.table("institutes").upsert({"name": inst_name}, on_conflict="name").execute()
         inst_records = client.table("institutes").select("id").eq("name", inst_name).execute()
         if not inst_records.data:
             raise RuntimeError("Failed to resolve institute ID from Supabase")
@@ -127,7 +169,6 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
             "source_payload": dataset
         }
         
-        # Check if dataset exists
         existing_ds = client.table("datasets").select("id").eq("institute_id", inst_id).eq("source_dataset_id", dataset_id).execute()
         if existing_ds.data:
             db_dataset_id = existing_ds.data[0]["id"]
@@ -136,7 +177,7 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
             new_ds = client.table("datasets").insert(dataset_row).execute()
             db_dataset_id = new_ds.data[0]["id"]
 
-        # 3. Upsert Rooms
+        # 3. Upsert Rooms & Unavailability
         rooms = dataset.get("rooms", [])
         if rooms:
             room_rows = [{
@@ -152,7 +193,22 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
             } for r in rooms]
             client.table("rooms").upsert(room_rows, on_conflict="dataset_id,id").execute()
 
-        # 4. Upsert Faculty
+        room_unavail = dataset.get("room_unavailability", [])
+        if room_unavail:
+            try:
+                client.table("room_unavailability").delete().eq("dataset_id", db_dataset_id).execute()
+                unavail_rows = [{
+                    "dataset_id": db_dataset_id,
+                    "room_id": u["room_id"],
+                    "day": u["day"],
+                    "periods": u.get("periods", []),
+                    "reason": u.get("reason", "")
+                } for u in room_unavail]
+                client.table("room_unavailability").insert(unavail_rows).execute()
+            except Exception as ex:
+                logger.debug(f"Room unavailability sync: {ex}")
+
+        # 4. Upsert Faculty & Faculty Unavailability
         faculty = dataset.get("faculty", [])
         if faculty:
             fac_rows = [{
@@ -165,6 +221,23 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
                 "preferences": f.get("preferences", [])
             } for f in faculty]
             client.table("faculty").upsert(fac_rows, on_conflict="dataset_id,id").execute()
+
+            fac_unavail_rows = []
+            for f in faculty:
+                for u in f.get("unavailable", []):
+                    fac_unavail_rows.append({
+                        "dataset_id": db_dataset_id,
+                        "faculty_id": f["id"],
+                        "day": u["day"],
+                        "periods": u.get("periods", []),
+                        "reason": u.get("reason", "")
+                    })
+            if fac_unavail_rows:
+                try:
+                    client.table("faculty_unavailability").delete().eq("dataset_id", db_dataset_id).execute()
+                    client.table("faculty_unavailability").insert(fac_unavail_rows).execute()
+                except Exception as ex:
+                    logger.debug(f"Faculty unavailability sync: {ex}")
 
         # 5. Upsert Student Groups
         groups = dataset.get("student_groups", [])
@@ -195,7 +268,7 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
             } for c in courses]
             client.table("courses").upsert(course_rows, on_conflict="dataset_id,id").execute()
 
-        # 7. Upsert Sessions
+        # 7. Upsert Sessions & Session Groups
         sessions = dataset.get("sessions", [])
         if sessions:
             sess_rows = [{
@@ -214,6 +287,46 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
             } for s in sessions]
             client.table("sessions").upsert(sess_rows, on_conflict="dataset_id,id").execute()
 
+            sess_grp_rows = []
+            for s in sessions:
+                for gid in s.get("groups", []):
+                    sess_grp_rows.append({
+                        "dataset_id": db_dataset_id,
+                        "session_id": s["id"],
+                        "group_id": gid
+                    })
+            if sess_grp_rows:
+                try:
+                    client.table("session_groups").delete().eq("dataset_id", db_dataset_id).execute()
+                    client.table("session_groups").insert(sess_grp_rows).execute()
+                except Exception as ex:
+                    logger.debug(f"Session groups sync: {ex}")
+
+        # 8. Upsert Booking Requests & Windows
+        bookings = dataset.get("booking_requests", [])
+        for b in bookings:
+            save_booking_request_to_supabase(b, dataset_id_str=dataset_id)
+
+        # 9. Upsert Cancellations
+        cancellations = dataset.get("cancellations", [])
+        for c in cancellations:
+            save_cancellation_to_supabase(c, dataset_id_str=dataset_id)
+
+        # 10. Upsert Exams
+        exams = dataset.get("exams", [])
+        if exams:
+            try:
+                exam_rows = [{
+                    "dataset_id": db_dataset_id,
+                    "id": e["id"],
+                    "session_id": e.get("session_id"),
+                    "name": e.get("name", e["id"]),
+                    "duration_periods": e.get("duration_periods", 2)
+                } for e in exams]
+                client.table("exams").upsert(exam_rows, on_conflict="dataset_id,id").execute()
+            except Exception as ex:
+                logger.debug(f"Exams sync: {ex}")
+
         _last_sync_time = datetime.now().isoformat()
         return {
             "success": True,
@@ -222,6 +335,7 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
             "rooms_synced": len(rooms),
             "faculty_synced": len(faculty),
             "sessions_synced": len(sessions),
+            "bookings_synced": len(bookings),
             "timestamp": _last_sync_time
         }
     except Exception as e:
@@ -240,7 +354,7 @@ def sync_schedule_to_supabase(
     val_report: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    Syncs generated schedule to Supabase schedules and scheduled_sessions tables.
+    Syncs generated schedule to Supabase schedules, scheduled_sessions, and schedule_bookings tables.
     """
     client = get_supabase_client()
     if not client:
@@ -263,6 +377,8 @@ def sync_schedule_to_supabase(
             "validator_report": val_report or {}
         }
         res = client.table("schedules").insert(sched_row).execute()
+        if not res.data:
+            return {"success": False, "message": "Failed to create schedule row in Supabase"}
         sched_id = res.data[0]["id"]
 
         # Populate scheduled_sessions
@@ -277,10 +393,26 @@ def sync_schedule_to_supabase(
             } for s in sessions]
             client.table("scheduled_sessions").insert(sched_sess_rows).execute()
 
+        # Populate schedule_bookings for fest_week decisions
+        fest_bookings = schedule_data.get("fest_week", {}).get("bookings", [])
+        if fest_bookings:
+            dec_rows = [{
+                "schedule_id": sched_id,
+                "request_id": b["request_id"],
+                "status": b.get("status", "approved"),
+                "day": b.get("day"),
+                "start_period": b.get("start_period"),
+                "end_period": b.get("end_period"),
+                "room_id": b.get("room_id"),
+                "reason": b.get("reason", "")
+            } for b in fest_bookings]
+            client.table("schedule_bookings").insert(dec_rows).execute()
+
         return {
             "success": True,
             "schedule_id": sched_id,
-            "sessions_synced": len(sessions)
+            "sessions_synced": len(sessions),
+            "bookings_synced": len(fest_bookings)
         }
     except Exception as e:
         logger.error(f"Error syncing schedule to Supabase: {e}")
@@ -340,7 +472,12 @@ def save_booking_request_to_supabase(booking: Dict[str, Any], dataset_id_str: st
         }
         client.table("booking_requests").upsert(row, on_conflict="dataset_id,id").execute()
 
-        # Insert windows
+        # Replace windows
+        try:
+            client.table("booking_windows").delete().eq("dataset_id", ds_id).eq("request_id", booking["id"]).execute()
+        except Exception:
+            pass
+
         windows = booking.get("windows", [])
         if windows:
             win_rows = [{
@@ -365,13 +502,12 @@ def save_booking_decision_to_supabase(decision: Dict[str, Any], dataset_id_str: 
     if not client:
         return {"success": False, "mode": "local_fallback"}
     try:
-        # Find active schedule
         ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
         if not ds_res.data:
             return {"success": False, "message": "Dataset not found"}
         ds_id = ds_res.data[0]["id"]
 
-        sched_res = client.table("schedules").select("id,payload").eq("dataset_id", ds_id).eq("status", "active").limit(1).execute()
+        sched_res = client.table("schedules").select("id,payload").eq("dataset_id", ds_id).eq("status", "active").order("created_at", desc=True).limit(1).execute()
         if not sched_res.data:
             return {"success": False, "message": "No active schedule row in Supabase"}
         sched_id = sched_res.data[0]["id"]
@@ -389,7 +525,7 @@ def save_booking_decision_to_supabase(decision: Dict[str, Any], dataset_id_str: 
         }
         client.table("schedule_bookings").upsert(dec_row, on_conflict="schedule_id,request_id").execute()
 
-        # Also update the payload JSON inside schedules table
+        # Update the payload JSON inside schedules table
         fest_bookings = sched_payload.setdefault("fest_week", {}).setdefault("bookings", [])
         existing = next((b for b in fest_bookings if b.get("request_id") == decision["request_id"]), None)
         if existing:
@@ -462,16 +598,17 @@ def save_disruption_to_supabase(
 
 def load_data_from_supabase(dataset_id_str: str = "CIT_PUBLIC_V1") -> Optional[Dict[str, Any]]:
     """
-    Loads saved bookings, cancellations, and active schedule from Supabase if present.
+    Loads saved bookings, cancellations, dataset source payload, and active schedule from Supabase if present.
     """
     client = get_supabase_client()
     if not client:
         return None
     try:
-        ds_res = client.table("datasets").select("id,source_payload").eq("source_dataset_id", dataset_id_str).execute()
+        ds_res = client.table("datasets").select("id,source_payload").eq("source_dataset_id", dataset_id_str).limit(1).execute()
         if not ds_res.data:
             return None
         ds_id = ds_res.data[0]["id"]
+        source_payload = ds_res.data[0].get("source_payload")
 
         # Fetch bookings
         b_res = client.table("booking_requests").select("*").eq("dataset_id", ds_id).execute()
@@ -517,10 +654,11 @@ def load_data_from_supabase(dataset_id_str: str = "CIT_PUBLIC_V1") -> Optional[D
             })
 
         # Fetch active schedule
-        sched_res = client.table("schedules").select("payload").eq("dataset_id", ds_id).eq("status", "active").limit(1).execute()
+        sched_res = client.table("schedules").select("payload").eq("dataset_id", ds_id).eq("status", "active").order("created_at", desc=True).limit(1).execute()
         active_sched = sched_res.data[0]["payload"] if sched_res.data else None
 
         return {
+            "dataset": source_payload,
             "bookings": bookings,
             "cancellations": cancellations,
             "schedule": active_sched
@@ -528,4 +666,3 @@ def load_data_from_supabase(dataset_id_str: str = "CIT_PUBLIC_V1") -> Optional[D
     except Exception as e:
         logger.warning(f"Could not load state from Supabase: {e}")
         return None
-

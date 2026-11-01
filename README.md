@@ -164,6 +164,31 @@ Open `http://localhost:3000` in your browser. The Vite development server automa
 
 ---
 
+## Supabase PostgreSQL Integration (Fast Setup)
+
+1. **Create Tables & Schema**:
+   - In your Supabase Dashboard, navigate to **SQL Editor** -> **New Query**.
+   - Paste and run `supabase/schema.sql`.
+2. **Configure Environment**:
+   - Set `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_KEY`) in `.env`.
+   - *(Optional when using publishable anon key)*: Paste and run `supabase/fix_permissions_for_backend.sql` in SQL Editor to grant schema permissions.
+   - Click the **Sync Supabase** button in the header bar or call `POST /api/database/sync` to persist campus data.
+
+---
+
+## Deployment Guide
+
+- **Frontend (Vercel)**:
+  - Framework: **Vite** (Root Directory: `.` or `frontend`).
+  - Pre-configured with `vercel.json` for automatic SPA routes and `/api` proxying.
+  - Set Environment Variable: `VITE_API_BASE_URL` (pointing to your deployed backend URL).
+- **Backend (Render / Railway / Cloud)**:
+  - Build command: `pip install -r requirements.txt`
+  - Start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+  - Set Environment Variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_KEY`), and optionally `LLM_API_KEY`.
+
+---
+
 ## Key Features & Solvers
 
 1. **Stage 1 (Base Timetable Solver):**
