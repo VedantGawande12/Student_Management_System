@@ -365,6 +365,12 @@ def solve_bookings(data, base_timetable):
         req_room_types = req["room_types"]
         req_needs = set(req["needs"])
         req_groups = req["mandatory_for_groups"]
+        requested_room = req.get("requested_room")
+        invalid_room_note = (
+            f"Requested room {requested_room} does not exist in this dataset."
+            if requested_room and requested_room not in rooms
+            else ""
+        )
         
         # Candidate rooms
         cand_rooms = []
@@ -397,6 +403,8 @@ def solve_bookings(data, base_timetable):
                 reason = f"No venue seats {att} (largest venue is {largest_venue_name} with capacity {max_cap})"
             else:
                 reason = f"No venue matching required types {req_room_types} and features {sorted(req_needs)}"
+            if invalid_room_note:
+                reason = f"{invalid_room_note} {reason}"
             decisions.append({
                 "request_id": rid_,
                 "status": "rejected",
@@ -442,7 +450,11 @@ def solve_bookings(data, base_timetable):
                 "start_period": a,
                 "end_period": b,
                 "room_id": room_id,
-                "reason": f"{cat_label} approved in {room_id}"
+                "reason": (
+                    f"{cat_label} approved in {room_id}"
+                    if not invalid_room_note
+                    else f"{invalid_room_note} Approved in {room_id} instead."
+                )
             })
             continue
             
@@ -480,13 +492,23 @@ def solve_bookings(data, base_timetable):
                 "start_period": a,
                 "end_period": b,
                 "room_id": room_id,
-                "reason": f"Requested window busy; alternative offered in {room_id} on {day} P{a}-P{b}"
+                "reason": (
+                    f"Requested window busy; alternative offered in {room_id} on {day} P{a}-P{b}"
+                    if not invalid_room_note
+                    else (
+                        f"{invalid_room_note} Requested window busy; alternative offered "
+                        f"in {room_id} on {day} P{a}-P{b}."
+                    )
+                )
             })
         else:
+            reason = "Requested window busy and no valid alternative slot available"
+            if invalid_room_note:
+                reason = f"{invalid_room_note} {reason}"
             decisions.append({
                 "request_id": rid_,
                 "status": "rejected",
-                "reason": "Requested window busy and no valid alternative slot available"
+                "reason": reason
             })
             
     # Sort decisions back to order of booking_requests for clean UI/export
