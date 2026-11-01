@@ -682,7 +682,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                                   <div
                                     key={scheduled.session_id}
                                     onClick={() => setSelectedSession({ scheduled, meta, diffChange, override })}
-                                    className={`p-1.5 rounded cursor-pointer transition-all border text-[11px] shadow-2xs relative ${
+                                    className={`p-1.5 rounded cursor-pointer transition-colors border text-[11px] relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${
                                       isError
                                         ? 'bg-red-50 border-red-500 text-red-950 ring-1 ring-red-500 hover:bg-red-100'
                                         : isChanged
@@ -749,7 +749,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                                 <div
                                   key={`${decision.request_id}-${idx}`}
                                   onClick={() => setSelectedEvent({ bookingMeta, decision })}
-                                  className="p-1.5 rounded cursor-pointer transition-all border border-purple-400 bg-purple-100/90 hover:bg-purple-200 text-purple-950 text-[11px] shadow-xs"
+                                  className="p-1.5 rounded cursor-pointer transition-colors border border-purple-400 bg-purple-100/90 hover:bg-purple-200 text-purple-950 text-[11px] shadow-xs"
                                   title={`View fest event ${decision.request_id}`}
                                 >
                                   <div className="flex items-center justify-between font-bold leading-tight">
@@ -901,11 +901,12 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                       </div>
 
                       <button
+                        type="button"
                         onClick={handleConfirmMove}
                         disabled={isApplyingMove}
-                        className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded font-bold text-xs transition-colors disabled:opacity-50"
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded font-semibold text-xs transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
                       >
-                        {isApplyingMove ? 'Moving...' : 'Apply Move →'}
+                        {isApplyingMove ? 'Moving...' : 'Apply move'}
                       </button>
                     </div>
                   )}

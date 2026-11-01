@@ -1,6 +1,6 @@
 import React from 'react';
 import { DisruptionDiff, UserAccount } from '../../core/types';
-import { X, ArrowRight, Check, AlertCircle } from 'lucide-react';
+import { X, ArrowRight, Check } from 'lucide-react';
 
 interface DisruptionDiffModalProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ export const DisruptionDiffModal: React.FC<DisruptionDiffModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <div className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <div className="text-base font-semibold text-slate-900 flex items-center gap-2">
               <span>Disruption reschedule diff</span>
               <span className="px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-900 border border-amber-300">
                 minimal perturbation
@@ -42,8 +42,9 @@ export const DisruptionDiffModal: React.FC<DisruptionDiffModalProps> = ({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1"
+            className="text-slate-400 hover:text-slate-600 p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-700"
           >
             <X className="w-5 h-5" />
           </button>
@@ -53,24 +54,24 @@ export const DisruptionDiffModal: React.FC<DisruptionDiffModalProps> = ({
         <div className="grid grid-cols-3 gap-3 text-center text-xs">
           <div className="bg-slate-50 p-2.5 rounded border border-slate-200">
             <div className="text-slate-500 font-medium">Total sessions moved</div>
-            <div className="text-lg font-bold text-slate-900">{diff.sessions_moved_count}</div>
+            <div className="text-lg font-bold text-slate-900 font-mono">{diff.sessions_moved_count}</div>
           </div>
           <div className="bg-amber-50 p-2.5 rounded border border-amber-200">
             <div className="text-amber-800 font-medium">Time changed</div>
-            <div className="text-lg font-bold text-amber-950">{diff.time_changed_count}</div>
+            <div className="text-lg font-bold text-amber-950 font-mono">{diff.time_changed_count}</div>
           </div>
           <div className="bg-blue-50 p-2.5 rounded border border-blue-200">
             <div className="text-blue-800 font-medium">Room only changed</div>
-            <div className="text-lg font-bold text-blue-950">{diff.room_only_count}</div>
+            <div className="text-lg font-bold text-blue-950 font-mono">{diff.room_only_count}</div>
           </div>
         </div>
 
         {/* Changes Table */}
         <div className="overflow-y-auto flex-1 border border-slate-200 rounded">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-100 text-slate-700 font-medium sticky top-0 border-b border-slate-200">
+            <thead className="bg-slate-50 text-slate-700 font-medium sticky top-0 border-b border-slate-200">
               <tr>
-                <th className="py-2 px-3">Session id</th>
+                <th className="py-2 px-3">Session ID</th>
                 <th className="py-2 px-3">Baseline slot</th>
                 <th className="py-2 px-3">New slot</th>
                 <th className="py-2 px-3">Change type</th>
@@ -117,16 +118,18 @@ export const DisruptionDiffModal: React.FC<DisruptionDiffModalProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={onReject}
-              className="px-3.5 py-1.5 text-xs text-slate-700 hover:text-slate-900 border border-slate-300 rounded font-medium transition-colors"
+              className="px-3.5 py-1.5 text-xs text-slate-700 hover:text-slate-900 border border-slate-300 rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-700"
             >
               Discard changes
             </button>
             {isAdmin && (
               <button
+                type="button"
                 onClick={onApprove}
                 disabled={isApproving}
-                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs bg-emerald-700 hover:bg-emerald-600 text-white rounded font-medium transition-colors disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs bg-emerald-700 hover:bg-emerald-600 text-white rounded font-medium transition-colors disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>{isApproving ? 'Committing...' : 'Approve and commit changes'}</span>

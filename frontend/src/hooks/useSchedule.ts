@@ -35,6 +35,10 @@ export function useSchedule() {
       const data = await fetchState();
       setAppState(data);
       setError(null);
+      // Automatic background database synchronization if writable and not yet synced
+      if (data.database_status?.writable && !data.database_status?.last_synced) {
+        apiSyncDatabase().catch(() => {});
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to load application state');
     } finally {

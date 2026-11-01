@@ -6,7 +6,7 @@
 
 A production-grade, full-stack campus scheduling platform engineered for the **Crunch Week** challenge at Chilika Institute of Technology (CIT). The system features a **4-stage deterministic CP-SAT solver** powered by **Google OR-Tools**, direct integration with `validator.py`, strict headless UI separation for future Hallmark styling, plain-language English & Hinglish booking parsing with guaranteed manual fallback, role-based workflows with **no self-approval**, and minimal-perturbation disruption rescheduling.
 
-- **Live Deployed Application:** [https://cit-crunch-scheduling.vercel.app](https://cit-crunch-scheduling.vercel.app)
+- **Live Deployed Application:** [https://cit-scheduling.vercel.app](https://cit-scheduling.vercel.app/)
 - **Demo Video Walkthrough:** [https://youtu.be/cit-crunch-demo](https://youtu.be/cit-crunch-demo)
 
 ---
