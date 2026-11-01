@@ -204,19 +204,43 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
                         <span>Explain</span>
                       </button>
 
+                      {allowApprove && status !== 'approved' && (
+                        <button
+                          onClick={() => handleApprove(req)}
+                          className="px-2 py-1 text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded transition-colors font-medium"
+                          title="Approve booking request"
+                        >
+                          Approve
+                        </button>
+                      )}
+
+                      {allowApprove && status !== 'rejected' && (
+                        <button
+                          onClick={() => handleReject(req)}
+                          className="px-2 py-1 text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-300 rounded transition-colors font-medium"
+                          title="Reject booking request"
+                        >
+                          Reject
+                        </button>
+                      )}
+
                       {allowCancel && status !== 'rejected' && (
                         <button
                           onClick={() => handleCancel(req)}
-                          className="px-2 py-1 text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 rounded transition-colors"
+                          className="px-2 py-1 text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded transition-colors"
+                          title="Cancel booking"
                         >
                           Cancel
                         </button>
                       )}
 
                       {/* No self-approval indicator */}
-                      {isSelf && currentUser?.role !== 'admin' && (
-                        <span className="text-[10px] text-slate-400 italic" title="Self-approval forbidden (requester != approver)">
-                          Own request
+                      {isSelf && (
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-500 font-mono border border-slate-200"
+                          title="Conflict of Interest: Self-approval is strictly forbidden (requester != approver)."
+                        >
+                          Cannot self-approve
                         </span>
                       )}
                     </div>
