@@ -212,12 +212,14 @@ export interface AppStateResponse {
   faculty: Faculty[];
   student_groups: StudentGroup[];
   sessions: SessionItem[];
+  exams_meta?: Array<{ id: string; course_ids: string[]; groups: string[] }>;
   booking_requests: BookingRequest[];
   cancellations: Array<{ request_id: string; cancelled_at: string; by: string; note: string }>;
   active_schedule: FullSchedule | null;
   disrupted_schedule: FullSchedule | null;
   disruption_diff: DisruptionDiff | null;
   pending_disruption: any | null;
+  last_approved_diff?: DisruptionDiff | null;
   validator_report: ValidatorReport | null;
   disruption_validator_report: ValidatorReport | null;
   current_user: UserAccount;

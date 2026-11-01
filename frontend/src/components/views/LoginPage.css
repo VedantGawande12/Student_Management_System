@@ -1,0 +1,647 @@
+/* Hallmark · cit-login · theme: custom · idea: "the seal of access — role reveals context before entry" · vibe: "institutional dark-left crisp-right data-alive" */
+/* critique: deep navy animated canvas left, white credential panel right; consistent with existing index.css token system */
+/* waive: 44b — hero spans two locked panels; all key action content is in the visible right panel at 1280x800 */
+
+/* ── Root layout ─────────────────────────────────────────────────────────── */
+.lp-root {
+  display: flex;
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+/* ── Left panel ──────────────────────────────────────────────────────────── */
+.lp-left {
+  flex: 0 0 42%;
+  background-color: #0c1525;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  padding: 2.5rem 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle ruled background pattern */
+.lp-left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+/* ── Wordmark ────────────────────────────────────────────────────────────── */
+.lp-wordmark {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 2.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.lp-wordmark-badge {
+  width: 40px;
+  height: 40px;
+  background-color: #1e3a8a;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.lp-wordmark-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.lp-wordmark-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #f1f5f9;
+  line-height: 1.25;
+}
+
+.lp-wordmark-sub {
+  font-size: 0.6875rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+/* ── Canvas area ─────────────────────────────────────────────────────────── */
+.lp-canvas-area {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lp-canvas-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.lp-grid-label {
+  font-size: 0.6875rem;
+  color: #475569;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Timetable canvas (Admin) ────────────────────────────────────────────── */
+.lp-timetable-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.lp-timetable-cell {
+  background-color: rgba(30, 58, 138, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  border-radius: 3px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: left center;
+}
+
+.lp-cell-tag {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-family: ui-monospace, 'Courier New', monospace;
+}
+
+.lp-cell-lab { background-color: rgba(234, 179, 8, 0.2); color: #fde047; }
+.lp-cell-lec { background-color: rgba(59, 130, 246, 0.25); color: #93c5fd; }
+.lp-cell-tut { background-color: rgba(34, 197, 94, 0.2); color: #86efac; }
+
+/* ── Bar chart canvas (Coordinator) ─────────────────────────────────────── */
+.lp-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.lp-bar-row {
+  display: grid;
+  grid-template-columns: 3rem 1fr 2.5rem;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.lp-bar-label {
+  font-size: 0.625rem;
+  color: #94a3b8;
+  font-family: ui-monospace, 'Courier New', monospace;
+  text-align: right;
+}
+
+.lp-bar-track {
+  height: 6px;
+  background-color: rgba(148, 163, 184, 0.1);
+  border-radius: 2px;
+  overflow: clip;
+}
+
+.lp-bar-fill {
+  height: 100%;
+  background-color: #2563eb;
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.lp-bar-val {
+  font-size: 0.5625rem;
+  color: #64748b;
+  font-family: ui-monospace, 'Courier New', monospace;
+}
+
+/* ── Faculty grid canvas ─────────────────────────────────────────────────── */
+.lp-faculty-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lp-faculty-header {
+  display: flex;
+  gap: 6px;
+  padding-left: 0;
+}
+
+.lp-fac-day {
+  flex: 1;
+  text-align: center;
+  font-size: 0.5625rem;
+  color: #475569;
+  font-family: ui-monospace, 'Courier New', monospace;
+}
+
+.lp-faculty-row {
+  display: flex;
+  gap: 6px;
+}
+
+.lp-fac-slot {
+  flex: 1;
+  height: 32px;
+  border-radius: 3px;
+}
+
+.lp-fac-filled {
+  background-color: rgba(30, 58, 138, 0.55);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.lp-fac-empty {
+  background-color: rgba(148, 163, 184, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+/* ── Venue list canvas (Club) ────────────────────────────────────────────── */
+.lp-venue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lp-venue-row {
+  display: grid;
+  grid-template-columns: 3rem 1fr 4rem 4rem;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.08);
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+
+.lp-venue-id {
+  font-size: 0.5625rem;
+  font-family: ui-monospace, 'Courier New', monospace;
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+.lp-venue-name {
+  font-size: 0.625rem;
+  color: #cbd5e1;
+}
+
+.lp-venue-cap {
+  font-size: 0.5625rem;
+  color: #64748b;
+  font-family: ui-monospace, 'Courier New', monospace;
+  text-align: right;
+}
+
+.lp-venue-status {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  text-align: right;
+  font-family: ui-monospace, 'Courier New', monospace;
+}
+
+.lp-status-free { color: #4ade80; }
+.lp-status-booked { color: #f87171; }
+
+/* ── Canvas shared badge ─────────────────────────────────────────────────── */
+.lp-canvas-badge {
+  margin-top: 1.5rem;
+  display: inline-flex;
+  align-self: flex-start;
+  font-size: 0.625rem;
+  color: #22c55e;
+  background-color: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-weight: 500;
+}
+
+/* ── Left footer ─────────────────────────────────────────────────────────── */
+.lp-left-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+}
+
+.lp-footer-item {
+  font-size: 0.5625rem;
+  color: #475569;
+  font-family: ui-monospace, 'Courier New', monospace;
+}
+
+.lp-footer-sep {
+  width: 1px;
+  height: 10px;
+  background-color: #1e293b;
+}
+
+/* ── Right panel ─────────────────────────────────────────────────────────── */
+.lp-right {
+  flex: 1;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+}
+
+.lp-form {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Form header ─────────────────────────────────────────────────────────── */
+.lp-form-header {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 1.25rem;
+}
+
+.lp-form-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.25rem;
+}
+
+.lp-form-subtitle {
+  font-size: 0.8125rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Section ─────────────────────────────────────────────────────────────── */
+.lp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.lp-section-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ── Role cards grid ─────────────────────────────────────────────────────── */
+.lp-role-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.lp-role-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.875rem 0.5rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  text-align: center;
+}
+
+.lp-role-card:hover {
+  border-color: #cbd5e1;
+  background-color: #f1f5f9;
+}
+
+.lp-role-card:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+}
+
+.lp-role-card--active {
+  border-color: #1e3a8a;
+  background-color: #eff6ff;
+}
+
+.lp-role-icon {
+  color: #64748b;
+  display: flex;
+}
+
+.lp-role-icon--active {
+  color: #1d4ed8;
+}
+
+.lp-role-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.lp-role-sub {
+  font-size: 0.625rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.lp-role-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: #1d4ed8;
+}
+
+/* ── Role description strip ──────────────────────────────────────────────── */
+.lp-role-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background-color: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 5px;
+  padding: 0.5rem 0.75rem;
+}
+
+.lp-strip-icon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+}
+
+.lp-strip-text {
+  font-size: 0.75rem;
+  color: #78350f;
+  flex: 1;
+  line-height: 1.45;
+}
+
+.lp-strip-tier {
+  font-size: 0.625rem;
+  color: #d97706;
+  font-weight: 600;
+  white-space: nowrap;
+  font-family: ui-monospace, 'Courier New', monospace;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 1px;
+}
+
+/* ── Field label ─────────────────────────────────────────────────────────── */
+.lp-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1;
+}
+
+.lp-field-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.lp-forgot-link {
+  font-size: 0.6875rem;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+}
+
+.lp-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.lp-forgot-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+  border-radius: 2px;
+}
+
+/* ── Input ───────────────────────────────────────────────────────────────── */
+.lp-field-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lp-field-icon {
+  position: absolute;
+  left: 10px;
+  color: #94a3b8;
+  display: flex;
+  pointer-events: none;
+}
+
+.lp-input {
+  width: 100%;
+  height: 40px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: #0f172a;
+  background-color: #ffffff;
+  padding: 0 2.75rem 0 2rem;
+  font-family: ui-monospace, 'Courier New', monospace;
+  transition: border-color 0.15s ease;
+}
+
+.lp-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.lp-input--readonly {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: default;
+}
+
+.lp-field-domain {
+  position: absolute;
+  right: 10px;
+  font-size: 0.625rem;
+  color: #94a3b8;
+  font-family: ui-monospace, 'Courier New', monospace;
+  pointer-events: none;
+}
+
+/* ── Error ───────────────────────────────────────────────────────────────── */
+.lp-error {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  color: #991b1b;
+}
+
+/* ── Submit button ───────────────────────────────────────────────────────── */
+.lp-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 44px;
+  background-color: #1e3a8a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  width: 100%;
+}
+
+.lp-submit:hover:not(:disabled) {
+  background-color: #1e40af;
+}
+
+.lp-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.lp-submit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+}
+
+.lp-submit-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: lp-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes lp-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-submit-spinner {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ── Form footer note ────────────────────────────────────────────────────── */
+.lp-form-note {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Responsive: stack on narrow screens ─────────────────────────────────── */
+@media (max-width: 860px) {
+  .lp-root {
+    flex-direction: column;
+  }
+
+  .lp-left {
+    flex: 0 0 auto;
+    min-height: 220px;
+    padding: 1.5rem;
+  }
+
+  .lp-canvas-area {
+    display: none;
+  }
+
+  .lp-right {
+    padding: 2rem 1.5rem;
+  }
+
+  .lp-role-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+

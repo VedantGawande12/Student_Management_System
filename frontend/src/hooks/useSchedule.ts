@@ -161,8 +161,9 @@ export function useSchedule() {
     groups: appState?.student_groups ?? [],
     exams: appState?.active_schedule?.exams ?? [],
     bookings: appState?.booking_requests ?? [],
-    festDecisions: appState?.active_schedule?.fest_week.bookings ?? [],
-    sessionOverrides: appState?.active_schedule?.fest_week.session_overrides ?? []
+    festDecisions: appState?.active_schedule?.fest_week?.bookings ?? [],
+    sessionOverrides: appState?.active_schedule?.fest_week?.session_overrides ?? [],
+    lastApprovedDiff: appState?.last_approved_diff ?? null
   };
 }
 

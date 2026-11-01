@@ -127,7 +127,21 @@ class State:
         self.disrupted_schedule = None
         self.disruption_diff = None
         self.pending_disruption = None
+        self.last_approved_diff = None
         
+        # Hydrate state from Supabase if connected and tables exist
+        try:
+            remote_state = database.load_data_from_supabase(self.active_data.get("dataset_id", "CIT_PUBLIC_V1"))
+            if remote_state:
+                if remote_state.get("bookings"):
+                    self.active_data["booking_requests"] = remote_state["bookings"]
+                if remote_state.get("cancellations"):
+                    self.active_data["cancellations"] = remote_state["cancellations"]
+                if remote_state.get("schedule"):
+                    self.active_schedule = remote_state["schedule"]
+        except Exception as e:
+            logger.debug(f"Supabase state hydration skipped: {e}")
+
         # Default user (Dean/Admin)
         default_acc = copy.deepcopy(TEST_ACCOUNTS["admin@cit.edu.in"])
         default_acc.pop("password_hash", None)
@@ -211,6 +225,12 @@ class FacultyChangeRequest(BaseModel):
     preferred_day: str
     preferred_start_period: int
     note: Optional[str] = ""
+
+class SessionMoveRequest(BaseModel):
+    session_id: str
+    day: str
+    start_period: int
+    room_id: str
 
 # -------------------------------------------------------------
 # Auth Endpoints
@@ -377,12 +397,14 @@ def get_state(user: Dict[str, Any] = Depends(get_current_user)):
         "faculty": state.active_data.get("faculty", []),
         "student_groups": state.active_data.get("student_groups", []),
         "sessions": state.active_data.get("sessions", []),
+        "exams_meta": state.active_data.get("exams", []),
         "booking_requests": state.active_data.get("booking_requests", []),
         "cancellations": state.active_data.get("cancellations", []),
         "active_schedule": state.active_schedule,
         "disrupted_schedule": state.disrupted_schedule,
         "disruption_diff": state.disruption_diff,
         "pending_disruption": state.pending_disruption,
+        "last_approved_diff": state.last_approved_diff,
         "validator_report": val_report,
         "disruption_validator_report": disruption_val_report,
         "current_user": user,
@@ -407,6 +429,7 @@ def generate_schedule(user: Dict[str, Any] = Depends(require_role("admin"))):
         
         # If Supabase connected, auto sync
         val_report = validator.run(state.active_data, sched)
+        database.sync_dataset_to_supabase(state.active_data)
         database.sync_schedule_to_supabase(
             sched,
             dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
@@ -447,6 +470,15 @@ def apply_disruption(disruption: Optional[Dict[str, Any]] = None, user: Dict[str
             
         elapsed = (datetime.now() - t0).total_seconds()
         state.log_event(user["name"], f"Computed disruption schedule ({diff['sessions_moved_count']} sessions moved) in {elapsed:.1f}s")
+        
+        # Save disruption proposal to Supabase
+        database.save_disruption_to_supabase(
+            disruption,
+            diff=diff,
+            dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+            status="pending"
+        )
+
         return {
             "status": "success",
             "diff": diff,
@@ -460,12 +492,28 @@ def approve_disruption(user: Dict[str, Any] = Depends(require_role("admin"))):
     if not state.disrupted_schedule or not state.pending_disruption:
         raise HTTPException(status_code=400, detail="No pending disruption to approve")
         
+    diff_approved = state.disruption_diff
+    state.last_approved_diff = diff_approved
     state.active_data = validator.apply_disruption(state.active_data, state.pending_disruption)
     state.active_schedule = state.disrupted_schedule
+    
+    # Save approved disruption record to Supabase
+    database.save_disruption_to_supabase(
+        state.pending_disruption,
+        diff=diff_approved,
+        dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+        status="approved"
+    )
+
+    # Persist updated schedule to exports/schedule.json so exports reflect changes!
+    os.makedirs(os.path.dirname(state.export_sched_path), exist_ok=True)
+    with open(state.export_sched_path, "w", encoding="utf-8") as f:
+        json.dump(state.active_schedule, f, indent=2)
+
     state.disrupted_schedule = None
     state.disruption_diff = None
     state.pending_disruption = None
-    state.log_event(user["name"], "Approved disruption changes to active timetable")
+    state.log_event(user["name"], f"Approved disruption changes ({diff_approved.get('sessions_moved_count', 0)} sessions moved) to active timetable")
     
     # Sync approved schedule to DB if connected
     database.sync_dataset_to_supabase(state.active_data)
@@ -480,6 +528,13 @@ def approve_disruption(user: Dict[str, Any] = Depends(require_role("admin"))):
 
 @app.post("/api/disruption/reject")
 def reject_disruption(user: Dict[str, Any] = Depends(require_role("admin"))):
+    if state.pending_disruption:
+        database.save_disruption_to_supabase(
+            state.pending_disruption,
+            diff=state.disruption_diff,
+            dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+            status="rejected"
+        )
     state.disrupted_schedule = None
     state.disruption_diff = None
     state.pending_disruption = None
@@ -498,6 +553,16 @@ def reset_demo_data(user: Dict[str, Any] = Depends(require_role("admin"))):
     state.disruption_diff = None
     state.pending_disruption = None
     state.log_event(user["name"], "Reset demo data to initial state")
+
+    # Sync reset state to Supabase
+    database.sync_dataset_to_supabase(state.active_data)
+    if state.active_schedule:
+        database.sync_schedule_to_supabase(
+            state.active_schedule,
+            dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+            status="active"
+        )
+
     return {"status": "success", "message": "Demo data reset successfully"}
 
 @app.post("/api/admin/upload-dataset")
@@ -566,6 +631,12 @@ def submit_booking(req: BookingSubmitRequest, user: Dict[str, Any] = Depends(get
         fest_res = solver.solve_bookings(state.active_data, state.active_schedule["sessions"])
         state.active_schedule["fest_week"] = fest_res
         
+    # Store change in Supabase database
+    database.save_booking_request_to_supabase(
+        booking,
+        state.active_data.get("dataset_id", "CIT_PUBLIC_V1")
+    )
+    
     return {"status": "success", "booking": booking}
 
 @app.post("/api/bookings/decide")
@@ -614,6 +685,13 @@ def decide_booking(
         fest_bookings.append(new_dec)
         
     state.log_event(user["name"], f"Decided booking {req.request_id}: {req.status}")
+
+    # Store change in Supabase database
+    database.save_booking_decision_to_supabase(
+        new_dec,
+        state.active_data.get("dataset_id", "CIT_PUBLIC_V1")
+    )
+
     return {"status": "success", "decision": new_dec}
 
 @app.post("/api/bookings/cancel")
@@ -629,12 +707,13 @@ def cancel_booking(request_id: str, user: Dict[str, Any] = Depends(get_current_u
     ):
         raise HTTPException(status_code=403, detail="You can only cancel your own booking requests")
         
-    state.active_data.setdefault("cancellations", []).append({
+    canc_record = {
         "request_id": request_id,
         "cancelled_at": datetime.now().isoformat() + "+05:30",
         "by": user["name"],
         "note": f"Cancelled by requester ({user['name']})"
-    })
+    }
+    state.active_data.setdefault("cancellations", []).append(canc_record)
     
     # Update fest_week decision to rejected
     if state.active_schedule and "fest_week" in state.active_schedule:
@@ -643,6 +722,16 @@ def cancel_booking(request_id: str, user: Dict[str, Any] = Depends(get_current_u
                 d["status"] = "rejected"
                 d["reason"] = "Cancelled by requester"
                 break
+                
+    state.log_event(user["name"], f"Cancelled booking request {request_id}")
+
+    # Store change in Supabase database
+    database.save_cancellation_to_supabase(
+        canc_record,
+        state.active_data.get("dataset_id", "CIT_PUBLIC_V1")
+    )
+
+    return {"status": "success", "message": f"Booking {request_id} cancelled"}
                 
     state.log_event(user["name"], f"Cancelled booking request {request_id}")
     return {"status": "success", "message": f"Booking {request_id} cancelled"}
@@ -748,6 +837,66 @@ def faculty_change(req: FacultyChangeRequest, user: Dict[str, Any] = Depends(get
         "message": message,
         "proposed_slot": {"day": day, "start_period": start, "room_id": available_rooms[0] if available_rooms else None}
     }
+
+@app.post("/api/schedule/move-session")
+def move_session(req: SessionMoveRequest, user: Dict[str, Any] = Depends(get_current_user)):
+    if not state.active_schedule:
+        raise HTTPException(status_code=400, detail="No active schedule available")
+        
+    session_item = next((s for s in state.active_schedule.get("sessions", []) if s["session_id"] == req.session_id), None)
+    if not session_item:
+        raise HTTPException(status_code=404, detail="Session not found in active schedule")
+        
+    meta = next((s for s in state.active_data.get("sessions", []) if s["id"] == req.session_id), None)
+    if not meta:
+        raise HTTPException(status_code=404, detail="Session metadata not found")
+        
+    if user["role"] == "faculty" and user.get("faculty_id") != meta.get("faculty_id"):
+        raise HTTPException(status_code=403, detail="You can only reschedule your own sessions")
+        
+    old_day = session_item["day"]
+    old_start = session_item["start_period"]
+    old_room = session_item["room_id"]
+    
+    session_item["day"] = req.day
+    session_item["start_period"] = req.start_period
+    session_item["room_id"] = req.room_id
+    
+    # Track as an approved change in last_approved_diff
+    diff_item = {
+        "session_id": req.session_id,
+        "before": {"day": old_day, "start_period": old_start, "room_id": old_room},
+        "after": {"day": req.day, "start_period": req.start_period, "room_id": req.room_id},
+        "type": "time_and_room" if old_room != req.room_id and (old_day != req.day or old_start != req.start_period) else ("room_only" if old_room != req.room_id else "time_only")
+    }
+    if not state.last_approved_diff:
+        state.last_approved_diff = {
+            "sessions_moved_count": 1,
+            "time_changed_count": 1 if old_day != req.day or old_start != req.start_period else 0,
+            "room_only_count": 1 if old_room != req.room_id and old_day == req.day and old_start == req.start_period else 0,
+            "changes": [diff_item]
+        }
+    else:
+        existing = next((c for c in state.last_approved_diff.get("changes", []) if c["session_id"] == req.session_id), None)
+        if existing:
+            existing.update(diff_item)
+        else:
+            state.last_approved_diff.setdefault("changes", []).append(diff_item)
+            state.last_approved_diff["sessions_moved_count"] = len(state.last_approved_diff["changes"])
+
+    # Persist updated schedule to exports/schedule.json
+    os.makedirs(os.path.dirname(state.export_sched_path), exist_ok=True)
+    with open(state.export_sched_path, "w", encoding="utf-8") as f:
+        json.dump(state.active_schedule, f, indent=2)
+        
+    state.log_event(user["name"], f"Approved rescheduling of session {req.session_id} from {old_day} P{old_start} ({old_room}) to {req.day} P{req.start_period} ({req.room_id})")
+    
+    database.sync_schedule_to_supabase(
+        state.active_schedule,
+        dataset_id_str=state.active_data.get("dataset_id", "CIT_PUBLIC_V1"),
+        status="active"
+    )
+    return {"status": "success", "session": session_item, "change": diff_item}
 
 @app.post("/api/ai/explain")
 def explain_decision_endpoint(decision: Dict[str, Any], request: Dict[str, Any]):

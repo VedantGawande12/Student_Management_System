@@ -12,24 +12,31 @@ import {
 const API_BASE = '/api';
 const TOKEN_KEY = 'cit_auth_token';
 
+let _memoryToken: string | null = null;
+
 export function getStoredToken(): string | null {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    return sessionStorage.getItem(TOKEN_KEY) || _memoryToken;
   } catch {
-    return null;
+    return _memoryToken;
   }
 }
 
 export function setStoredToken(token: string): void {
+  _memoryToken = token;
   try {
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
+    // Explicitly clean any stale tokens from localStorage
+    localStorage.removeItem(TOKEN_KEY);
   } catch {
     // Ignore storage errors
   }
 }
 
 export function clearStoredToken(): void {
+  _memoryToken = null;
   try {
+    sessionStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_KEY);
   } catch {
     // Ignore
@@ -78,6 +85,23 @@ export async function logout(): Promise<void> {
     });
   } finally {
     clearStoredToken();
+  }
+}
+
+export async function fetchCurrentUser(): Promise<UserAccount | null> {
+  const token = getStoredToken();
+  if (!token) return null;
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, {
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) {
+      clearStoredToken();
+      return null;
+    }
+    return res.json();
+  } catch {
+    return null;
   }
 }
 
@@ -255,6 +279,24 @@ export async function checkFacultyChange(change: {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
     throw new Error(err.detail || 'Failed to evaluate faculty change');
+  }
+  return res.json();
+}
+
+export async function applySessionMove(payload: {
+  session_id: string;
+  day: string;
+  start_period: number;
+  room_id: string;
+}): Promise<any> {
+  const res = await fetch(`${API_BASE}/schedule/move-session`, {
+    method: 'POST',
+    headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || 'Failed to move session');
   }
   return res.json();
 }

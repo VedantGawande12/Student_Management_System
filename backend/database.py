@@ -9,13 +9,18 @@ import json
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from dotenv import load_dotenv
+
+# Ensure environment variables from .env are loaded
+load_dotenv()
 
 logger = logging.getLogger("cit_database")
 logging.basicConfig(level=logging.INFO)
 
 # Environment variables
 SUPABASE_URL = os.getenv("SUPABASE_URL", "").strip()
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "").strip()
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+SUPABASE_KEY = SUPABASE_SERVICE_ROLE_KEY or os.getenv("SUPABASE_KEY", "").strip()
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
 _supabase_client = None
@@ -301,3 +306,226 @@ def record_audit_log(actor_name: str, action: str, details: Optional[Dict[str, A
         }).execute()
     except Exception as e:
         logger.debug(f"Audit log push skipped: {e}")
+
+def save_booking_request_to_supabase(booking: Dict[str, Any], dataset_id_str: str = "CIT_PUBLIC_V1") -> Dict[str, Any]:
+    """
+    Persists a newly submitted booking request and its windows directly to Supabase.
+    """
+    client = get_supabase_client()
+    if not client:
+        return {"success": False, "mode": "local_fallback", "message": "Supabase not connected"}
+    try:
+        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
+        if not ds_res.data:
+            return {"success": False, "message": f"Dataset {dataset_id_str} not found in Supabase"}
+        ds_id = ds_res.data[0]["id"]
+
+        row = {
+            "dataset_id": ds_id,
+            "id": booking["id"],
+            "requester_name": booking.get("requester", "Unknown"),
+            "requester_role": booking.get("role", "club"),
+            "department": booking.get("department"),
+            "requested_category": booking.get("requested_category", "club_event"),
+            "title": booking.get("title", ""),
+            "attendance": booking.get("attendance", 0),
+            "duration_periods": booking.get("duration_periods", 1),
+            "room_types": booking.get("room_types", []),
+            "needs": booking.get("needs", []),
+            "requested_room": booking.get("requested_room"),
+            "mandatory_for_groups": booking.get("mandatory_for_groups", []),
+            "series_id": booking.get("series_id"),
+            "raw_text": booking.get("raw_text", ""),
+            "submitted_at": booking.get("submitted_at") or datetime.now().isoformat()
+        }
+        client.table("booking_requests").upsert(row, on_conflict="dataset_id,id").execute()
+
+        # Insert windows
+        windows = booking.get("windows", [])
+        if windows:
+            win_rows = [{
+                "dataset_id": ds_id,
+                "request_id": booking["id"],
+                "day": w["day"],
+                "from_period": w["from_period"],
+                "to_period": w["to_period"]
+            } for w in windows]
+            client.table("booking_windows").insert(win_rows).execute()
+
+        return {"success": True, "booking_id": booking["id"]}
+    except Exception as e:
+        logger.warning(f"Failed to persist booking to Supabase: {e}")
+        return {"success": False, "error": str(e)}
+
+def save_booking_decision_to_supabase(decision: Dict[str, Any], dataset_id_str: str = "CIT_PUBLIC_V1") -> Dict[str, Any]:
+    """
+    Persists an approval/rejection decision on a booking request directly to Supabase.
+    """
+    client = get_supabase_client()
+    if not client:
+        return {"success": False, "mode": "local_fallback"}
+    try:
+        # Find active schedule
+        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
+        if not ds_res.data:
+            return {"success": False, "message": "Dataset not found"}
+        ds_id = ds_res.data[0]["id"]
+
+        sched_res = client.table("schedules").select("id,payload").eq("dataset_id", ds_id).eq("status", "active").limit(1).execute()
+        if not sched_res.data:
+            return {"success": False, "message": "No active schedule row in Supabase"}
+        sched_id = sched_res.data[0]["id"]
+        sched_payload = sched_res.data[0]["payload"] or {}
+
+        dec_row = {
+            "schedule_id": sched_id,
+            "request_id": decision["request_id"],
+            "status": decision["status"],
+            "day": decision.get("day"),
+            "start_period": decision.get("start_period"),
+            "end_period": decision.get("end_period"),
+            "room_id": decision.get("room_id"),
+            "reason": decision.get("reason", "")
+        }
+        client.table("schedule_bookings").upsert(dec_row, on_conflict="schedule_id,request_id").execute()
+
+        # Also update the payload JSON inside schedules table
+        fest_bookings = sched_payload.setdefault("fest_week", {}).setdefault("bookings", [])
+        existing = next((b for b in fest_bookings if b.get("request_id") == decision["request_id"]), None)
+        if existing:
+            existing.update(decision)
+        else:
+            fest_bookings.append(decision)
+        client.table("schedules").update({"payload": sched_payload}).eq("id", sched_id).execute()
+
+        return {"success": True, "decision": decision}
+    except Exception as e:
+        logger.warning(f"Failed to persist booking decision to Supabase: {e}")
+        return {"success": False, "error": str(e)}
+
+def save_cancellation_to_supabase(cancellation: Dict[str, Any], dataset_id_str: str = "CIT_PUBLIC_V1") -> Dict[str, Any]:
+    """
+    Persists a booking cancellation directly to Supabase.
+    """
+    client = get_supabase_client()
+    if not client:
+        return {"success": False, "mode": "local_fallback"}
+    try:
+        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
+        if not ds_res.data:
+            return {"success": False}
+        ds_id = ds_res.data[0]["id"]
+
+        row = {
+            "dataset_id": ds_id,
+            "request_id": cancellation["request_id"],
+            "cancelled_by_name": cancellation.get("by", "Unknown"),
+            "cancelled_at": cancellation.get("cancelled_at") or datetime.now().isoformat(),
+            "note": cancellation.get("note", "")
+        }
+        client.table("cancellations").insert(row).execute()
+        return {"success": True}
+    except Exception as e:
+        logger.warning(f"Failed to persist cancellation to Supabase: {e}")
+        return {"success": False, "error": str(e)}
+
+def save_disruption_to_supabase(
+    disruption: Dict[str, Any],
+    diff: Optional[Dict[str, Any]] = None,
+    dataset_id_str: str = "CIT_PUBLIC_V1",
+    status: str = "pending"
+) -> Dict[str, Any]:
+    """
+    Persists a disruption simulation or approved disruption directly to Supabase.
+    """
+    client = get_supabase_client()
+    if not client:
+        return {"success": False, "mode": "local_fallback"}
+    try:
+        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
+        if not ds_res.data:
+            return {"success": False}
+        ds_id = ds_res.data[0]["id"]
+
+        row = {
+            "dataset_id": ds_id,
+            "description": disruption.get("description", "Disruption event"),
+            "changes": disruption.get("changes", []),
+            "diff": diff or {},
+            "status": status
+        }
+        client.table("disruptions").insert(row).execute()
+        return {"success": True}
+    except Exception as e:
+        logger.warning(f"Failed to persist disruption to Supabase: {e}")
+        return {"success": False, "error": str(e)}
+
+def load_data_from_supabase(dataset_id_str: str = "CIT_PUBLIC_V1") -> Optional[Dict[str, Any]]:
+    """
+    Loads saved bookings, cancellations, and active schedule from Supabase if present.
+    """
+    client = get_supabase_client()
+    if not client:
+        return None
+    try:
+        ds_res = client.table("datasets").select("id,source_payload").eq("source_dataset_id", dataset_id_str).execute()
+        if not ds_res.data:
+            return None
+        ds_id = ds_res.data[0]["id"]
+
+        # Fetch bookings
+        b_res = client.table("booking_requests").select("*").eq("dataset_id", ds_id).execute()
+        w_res = client.table("booking_windows").select("*").eq("dataset_id", ds_id).execute()
+        c_res = client.table("cancellations").select("*").eq("dataset_id", ds_id).execute()
+
+        # Group windows by request_id
+        win_by_req: Dict[str, List[Dict[str, Any]]] = {}
+        for w in (w_res.data or []):
+            win_by_req.setdefault(w["request_id"], []).append({
+                "day": w["day"],
+                "from_period": w["from_period"],
+                "to_period": w["to_period"]
+            })
+
+        bookings = []
+        for b in (b_res.data or []):
+            bookings.append({
+                "id": b["id"],
+                "submitted_at": b.get("submitted_at"),
+                "requester": b.get("requester_name"),
+                "role": b.get("requester_role"),
+                "department": b.get("department"),
+                "requested_category": b.get("requested_category"),
+                "title": b.get("title"),
+                "attendance": b.get("attendance"),
+                "duration_periods": b.get("duration_periods"),
+                "windows": win_by_req.get(b["id"], []),
+                "room_types": b.get("room_types", []),
+                "needs": b.get("needs", []),
+                "requested_room": b.get("requested_room"),
+                "mandatory_for_groups": b.get("mandatory_for_groups", []),
+                "raw_text": b.get("raw_text", "")
+            })
+
+        cancellations = []
+        for c in (c_res.data or []):
+            cancellations.append({
+                "request_id": c["request_id"],
+                "cancelled_at": c.get("cancelled_at"),
+                "by": c.get("cancelled_by_name"),
+                "note": c.get("note", "")
+            })
+
+        # Fetch active schedule
+        sched_res = client.table("schedules").select("payload").eq("dataset_id", ds_id).eq("status", "active").limit(1).execute()
+        active_sched = sched_res.data[0]["payload"] if sched_res.data else None
+
+        return {
+            "bookings": bookings,
+            "cancellations": cancellations,
+            "schedule": active_sched
+        }
+    except Exception as e:
+        logger.warning(f"Could not load state from Supabase: {e}")
+        return None
+

@@ -5,14 +5,42 @@ import {
   logout as apiLogout,
   switchUser,
   getTestCredentials,
-  clearStoredToken
+  fetchCurrentUser,
+  clearStoredToken,
+  getStoredToken
 } from '../core/api';
 
 export function useRoleAuth(initialUser?: UserAccount) {
   const [currentUser, setCurrentUser] = useState<UserAccount | null>(initialUser || null);
   const [testCredentials, setTestCredentials] = useState<TestCredential[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!!getStoredToken()); // true only if we have a token to validate
   const [error, setError] = useState<string | null>(null);
+
+  // Restore session from stored token on mount
+  useEffect(() => {
+    let mounted = true;
+    const token = getStoredToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    fetchCurrentUser()
+      .then((user) => {
+        if (!mounted) return;
+        if (user) {
+          setCurrentUser(user);
+        } else {
+          clearStoredToken();
+        }
+      })
+      .catch(() => {
+        if (mounted) clearStoredToken();
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => { mounted = false; };
+  }, []);
 
   // Load test credentials once on mount
   useEffect(() => {
