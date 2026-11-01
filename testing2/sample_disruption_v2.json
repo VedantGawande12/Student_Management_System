@@ -1,0 +1,67 @@
+{
+  "id": "aurora-permanent-change-v2",
+  "dataset": "aurora-fresh-v2",
+  "description": "Synthetic occupied-slot disruption. Repair feasibility is not asserted.",
+  "changes": [
+    {
+      "type": "faculty_unavailable",
+      "faculty_id": "AV-P148",
+      "days": [
+        "THU"
+      ],
+      "periods": [
+        2
+      ],
+      "reason": "New weekly clinical outreach duty"
+    },
+    {
+      "type": "room_unavailable",
+      "room_id": "AV-L41",
+      "days": [
+        "THU"
+      ],
+      "periods": [
+        2,
+        3,
+        4
+      ],
+      "reason": "Air-quality retrofit appointment"
+    },
+    {
+      "type": "add_faculty",
+      "faculty": {
+        "id": "AV-VISITOR-771",
+        "name": "Dr. Sana Iyer",
+        "department": "DESIGN",
+        "max_hours_per_day": 6,
+        "needs_accessible": false,
+        "unavailable": [],
+        "preferences": []
+      }
+    },
+    {
+      "type": "add_session",
+      "session": {
+        "id": "AV-EXTRA-881",
+        "course_id": "AV-M56-9",
+        "kind": "lab",
+        "groups": [
+          "AV-G56"
+        ],
+        "faculty_id": "AV-VISITOR-771",
+        "size": 81,
+        "duration": 3,
+        "room_types": [
+          "lab_civil"
+        ],
+        "needs_accessible": false,
+        "basket_slot": null,
+        "fixed_slot": null
+      }
+    },
+    {
+      "type": "remove_session",
+      "session_id": "AV-M41-7-T1"
+    }
+  ]
+}

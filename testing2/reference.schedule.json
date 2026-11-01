@@ -1,0 +1,2464 @@
+{
+  "team": "GENERATED TEST REFERENCE — NOT A HACKATHON SUBMISSION",
+  "dataset_id": "aurora-fresh-v2",
+  "sessions": [
+    {
+      "session_id": "AV-O81-E1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-O82-E1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-O83-E1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-O81-E2",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-O82-E2",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-O83-E2",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M56-9-P1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-L41"
+    },
+    {
+      "session_id": "AV-M56-8-P1",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-L41"
+    },
+    {
+      "session_id": "AV-M56-10-P1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-L41"
+    },
+    {
+      "session_id": "AV-M56-7-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L41"
+    },
+    {
+      "session_id": "AV-M52-8-P1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-L31"
+    },
+    {
+      "session_id": "AV-M52-7-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L33"
+    },
+    {
+      "session_id": "AV-M52-10-P1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-L33"
+    },
+    {
+      "session_id": "AV-M52-9-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L33"
+    },
+    {
+      "session_id": "AV-M50-8-P1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-L33"
+    },
+    {
+      "session_id": "AV-M50-10-P1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-L31"
+    },
+    {
+      "session_id": "AV-M50-7-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L32"
+    },
+    {
+      "session_id": "AV-M50-9-P1",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-L31"
+    },
+    {
+      "session_id": "AV-M54-7-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L43"
+    },
+    {
+      "session_id": "AV-M54-8-P1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-L43"
+    },
+    {
+      "session_id": "AV-M54-10-P1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-L43"
+    },
+    {
+      "session_id": "AV-M54-9-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L43"
+    },
+    {
+      "session_id": "AV-M46-10-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L21"
+    },
+    {
+      "session_id": "AV-M46-9-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L21"
+    },
+    {
+      "session_id": "AV-M46-7-P1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-L23"
+    },
+    {
+      "session_id": "AV-M46-8-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L23"
+    },
+    {
+      "session_id": "AV-M43-9-P1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-L12"
+    },
+    {
+      "session_id": "AV-M43-10-P1",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-L11"
+    },
+    {
+      "session_id": "AV-M43-8-P1",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-L13"
+    },
+    {
+      "session_id": "AV-M43-7-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L12"
+    },
+    {
+      "session_id": "AV-M48-8-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L23"
+    },
+    {
+      "session_id": "AV-M48-7-P1",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-L21"
+    },
+    {
+      "session_id": "AV-M48-9-P1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-L21"
+    },
+    {
+      "session_id": "AV-M48-10-P1",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-L21"
+    },
+    {
+      "session_id": "AV-M44-7-P1",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-L11"
+    },
+    {
+      "session_id": "AV-M44-8-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L11"
+    },
+    {
+      "session_id": "AV-M44-10-P1",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-L13"
+    },
+    {
+      "session_id": "AV-M44-9-P1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-L13"
+    },
+    {
+      "session_id": "AV-M49-8-P1",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-L32"
+    },
+    {
+      "session_id": "AV-M49-10-P1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-L32"
+    },
+    {
+      "session_id": "AV-M49-7-P1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-L31"
+    },
+    {
+      "session_id": "AV-M49-9-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L32"
+    },
+    {
+      "session_id": "AV-M42-7-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L12"
+    },
+    {
+      "session_id": "AV-M42-8-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L12"
+    },
+    {
+      "session_id": "AV-M42-9-P1",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-L12"
+    },
+    {
+      "session_id": "AV-M42-10-P1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-L11"
+    },
+    {
+      "session_id": "AV-M47-10-P1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-L23"
+    },
+    {
+      "session_id": "AV-M47-8-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L22"
+    },
+    {
+      "session_id": "AV-M47-7-P1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-L22"
+    },
+    {
+      "session_id": "AV-M47-9-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L23"
+    },
+    {
+      "session_id": "AV-M45-7-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L22"
+    },
+    {
+      "session_id": "AV-M45-10-P1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-L22"
+    },
+    {
+      "session_id": "AV-M45-8-P1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-L23"
+    },
+    {
+      "session_id": "AV-M45-9-P1",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-L22"
+    },
+    {
+      "session_id": "AV-M41-8-P1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-L11"
+    },
+    {
+      "session_id": "AV-M41-10-P1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-L11"
+    },
+    {
+      "session_id": "AV-M41-7-P1",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-L13"
+    },
+    {
+      "session_id": "AV-M41-9-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L11"
+    },
+    {
+      "session_id": "AV-M53-7-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L42"
+    },
+    {
+      "session_id": "AV-M53-9-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L42"
+    },
+    {
+      "session_id": "AV-M53-8-P1",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-L42"
+    },
+    {
+      "session_id": "AV-M53-10-P1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-L42"
+    },
+    {
+      "session_id": "AV-M51-9-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L31"
+    },
+    {
+      "session_id": "AV-M51-10-P1",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-L31"
+    },
+    {
+      "session_id": "AV-M51-7-P1",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-L33"
+    },
+    {
+      "session_id": "AV-M51-8-P1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-L33"
+    },
+    {
+      "session_id": "AV-M55-9-P1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-L41"
+    },
+    {
+      "session_id": "AV-M55-10-P1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-L41"
+    },
+    {
+      "session_id": "AV-M55-7-P1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-L41"
+    },
+    {
+      "session_id": "AV-M55-8-P1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-L43"
+    },
+    {
+      "session_id": "AV-COM901-L2",
+      "day": "MON",
+      "start_period": 9,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-COM901-L1",
+      "day": "TUE",
+      "start_period": 4,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M56-8-L1",
+      "day": "THU",
+      "start_period": 7,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M56-8-L2",
+      "day": "WED",
+      "start_period": 9,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M56-10-T1",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M56-7-T1",
+      "day": "TUE",
+      "start_period": 8,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M56-10-L2",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M56-9-L2",
+      "day": "TUE",
+      "start_period": 7,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M56-9-T1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M56-9-L1",
+      "day": "WED",
+      "start_period": 1,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M56-10-L1",
+      "day": "MON",
+      "start_period": 5,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M56-8-T1",
+      "day": "FRI",
+      "start_period": 1,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M56-7-L2",
+      "day": "TUE",
+      "start_period": 4,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M56-7-L1",
+      "day": "MON",
+      "start_period": 3,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M52-10-L2",
+      "day": "TUE",
+      "start_period": 8,
+      "room_id": "AV-C12"
+    },
+    {
+      "session_id": "AV-M52-10-L1",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M52-8-T1",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M52-7-L1",
+      "day": "FRI",
+      "start_period": 3,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M52-8-L1",
+      "day": "TUE",
+      "start_period": 4,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M52-9-L1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M52-10-T1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M52-7-L2",
+      "day": "TUE",
+      "start_period": 9,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M52-8-L2",
+      "day": "WED",
+      "start_period": 3,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M52-7-T1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M52-9-L2",
+      "day": "MON",
+      "start_period": 8,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M52-9-T1",
+      "day": "WED",
+      "start_period": 1,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M50-8-T1",
+      "day": "FRI",
+      "start_period": 3,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M50-10-L1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M50-10-T1",
+      "day": "TUE",
+      "start_period": 7,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M50-9-L1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M50-7-T1",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M50-7-L1",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M50-9-L2",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M50-10-L2",
+      "day": "MON",
+      "start_period": 8,
+      "room_id": "AV-C15"
+    },
+    {
+      "session_id": "AV-M50-9-T1",
+      "day": "FRI",
+      "start_period": 4,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M50-8-L2",
+      "day": "WED",
+      "start_period": 3,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M50-7-L2",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M50-8-L1",
+      "day": "WED",
+      "start_period": 1,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M54-10-L2",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M54-8-T1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M54-9-L1",
+      "day": "TUE",
+      "start_period": 1,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M54-9-L2",
+      "day": "MON",
+      "start_period": 9,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M54-7-L2",
+      "day": "MON",
+      "start_period": 3,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M54-7-L1",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M54-9-T1",
+      "day": "WED",
+      "start_period": 3,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M54-10-T1",
+      "day": "TUE",
+      "start_period": 8,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M54-7-T1",
+      "day": "MON",
+      "start_period": 8,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M54-10-L1",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M54-8-L2",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M54-8-L1",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M46-7-L2",
+      "day": "FRI",
+      "start_period": 9,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M46-9-T1",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M46-8-L2",
+      "day": "FRI",
+      "start_period": 8,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M46-10-T1",
+      "day": "THU",
+      "start_period": 4,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M46-9-L1",
+      "day": "MON",
+      "start_period": 9,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M46-8-T1",
+      "day": "WED",
+      "start_period": 1,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M46-9-L2",
+      "day": "TUE",
+      "start_period": 8,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M46-8-L1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M46-7-T1",
+      "day": "FRI",
+      "start_period": 5,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M46-7-L1",
+      "day": "FRI",
+      "start_period": 7,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M46-10-L1",
+      "day": "TUE",
+      "start_period": 3,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M46-10-L2",
+      "day": "MON",
+      "start_period": 8,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M43-7-T1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M43-10-L1",
+      "day": "WED",
+      "start_period": 5,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M43-8-L1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M43-8-T1",
+      "day": "FRI",
+      "start_period": 8,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M43-10-L2",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M43-10-T1",
+      "day": "WED",
+      "start_period": 7,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M43-9-L1",
+      "day": "THU",
+      "start_period": 4,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M43-9-T1",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M43-7-L1",
+      "day": "WED",
+      "start_period": 4,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M43-7-L2",
+      "day": "WED",
+      "start_period": 1,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M43-9-L2",
+      "day": "FRI",
+      "start_period": 4,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M43-8-L2",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M48-7-L2",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M48-8-T1",
+      "day": "THU",
+      "start_period": 6,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M48-9-L1",
+      "day": "TUE",
+      "start_period": 4,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M48-10-L1",
+      "day": "THU",
+      "start_period": 7,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M48-10-T1",
+      "day": "FRI",
+      "start_period": 3,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M48-8-L2",
+      "day": "FRI",
+      "start_period": 7,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M48-8-L1",
+      "day": "FRI",
+      "start_period": 8,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M48-9-T1",
+      "day": "MON",
+      "start_period": 1,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M48-9-L2",
+      "day": "FRI",
+      "start_period": 1,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M48-7-T1",
+      "day": "FRI",
+      "start_period": 4,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M48-7-L1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M48-10-L2",
+      "day": "TUE",
+      "start_period": 3,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M44-9-L2",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M44-10-L2",
+      "day": "THU",
+      "start_period": 3,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M44-9-L1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M44-7-L1",
+      "day": "MON",
+      "start_period": 1,
+      "room_id": "AV-C12"
+    },
+    {
+      "session_id": "AV-M44-8-L2",
+      "day": "TUE",
+      "start_period": 8,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M44-9-T1",
+      "day": "MON",
+      "start_period": 4,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M44-10-L1",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M44-10-T1",
+      "day": "WED",
+      "start_period": 7,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M44-8-L1",
+      "day": "MON",
+      "start_period": 3,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M44-7-T1",
+      "day": "FRI",
+      "start_period": 9,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M44-7-L2",
+      "day": "THU",
+      "start_period": 8,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M44-8-T1",
+      "day": "FRI",
+      "start_period": 5,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M49-9-T1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M49-10-L1",
+      "day": "FRI",
+      "start_period": 3,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M49-8-L1",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M49-10-T1",
+      "day": "WED",
+      "start_period": 9,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M49-8-T1",
+      "day": "WED",
+      "start_period": 7,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M49-10-L2",
+      "day": "TUE",
+      "start_period": 6,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M49-9-L1",
+      "day": "FRI",
+      "start_period": 4,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M49-7-T1",
+      "day": "WED",
+      "start_period": 8,
+      "room_id": "AV-C12"
+    },
+    {
+      "session_id": "AV-M49-8-L2",
+      "day": "TUE",
+      "start_period": 9,
+      "room_id": "AV-C12"
+    },
+    {
+      "session_id": "AV-M49-7-L2",
+      "day": "WED",
+      "start_period": 5,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M49-9-L2",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M49-7-L1",
+      "day": "TUE",
+      "start_period": 1,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M42-10-T1",
+      "day": "WED",
+      "start_period": 9,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M42-7-T1",
+      "day": "MON",
+      "start_period": 5,
+      "room_id": "AV-C12"
+    },
+    {
+      "session_id": "AV-M42-7-L2",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-C12"
+    },
+    {
+      "session_id": "AV-M42-9-T1",
+      "day": "FRI",
+      "start_period": 7,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M42-9-L1",
+      "day": "FRI",
+      "start_period": 6,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M42-9-L2",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-C15"
+    },
+    {
+      "session_id": "AV-M42-8-T1",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M42-8-L1",
+      "day": "MON",
+      "start_period": 4,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M42-10-L1",
+      "day": "FRI",
+      "start_period": 5,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M42-10-L2",
+      "day": "FRI",
+      "start_period": 1,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M42-7-L1",
+      "day": "MON",
+      "start_period": 3,
+      "room_id": "AV-C15"
+    },
+    {
+      "session_id": "AV-M42-8-L2",
+      "day": "THU",
+      "start_period": 7,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M47-10-L2",
+      "day": "THU",
+      "start_period": 3,
+      "room_id": "AV-C15"
+    },
+    {
+      "session_id": "AV-M47-8-L2",
+      "day": "FRI",
+      "start_period": 5,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M47-9-L2",
+      "day": "TUE",
+      "start_period": 9,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M47-10-T1",
+      "day": "TUE",
+      "start_period": 4,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M47-8-L1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-C15"
+    },
+    {
+      "session_id": "AV-M47-9-T1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M47-7-L2",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M47-7-L1",
+      "day": "WED",
+      "start_period": 5,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M47-9-L1",
+      "day": "TUE",
+      "start_period": 3,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M47-8-T1",
+      "day": "TUE",
+      "start_period": 8,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M47-10-L1",
+      "day": "THU",
+      "start_period": 8,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M47-7-T1",
+      "day": "WED",
+      "start_period": 9,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M45-7-L2",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M45-8-L1",
+      "day": "WED",
+      "start_period": 9,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M45-8-T1",
+      "day": "FRI",
+      "start_period": 2,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M45-7-L1",
+      "day": "FRI",
+      "start_period": 1,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M45-9-T1",
+      "day": "FRI",
+      "start_period": 3,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M45-9-L2",
+      "day": "MON",
+      "start_period": 4,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M45-7-T1",
+      "day": "WED",
+      "start_period": 3,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M45-10-L2",
+      "day": "WED",
+      "start_period": 1,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M45-10-L1",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M45-9-L1",
+      "day": "FRI",
+      "start_period": 9,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M45-8-L2",
+      "day": "FRI",
+      "start_period": 5,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M45-10-T1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-C11"
+    },
+    {
+      "session_id": "AV-M41-10-T1",
+      "day": "THU",
+      "start_period": 4,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M41-10-L2",
+      "day": "MON",
+      "start_period": 7,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M41-7-T1",
+      "day": "WED",
+      "start_period": 5,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M41-10-L1",
+      "day": "WED",
+      "start_period": 3,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M41-9-L2",
+      "day": "WED",
+      "start_period": 8,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M41-8-T1",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M41-8-L2",
+      "day": "TUE",
+      "start_period": 9,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M41-9-T1",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M41-9-L1",
+      "day": "WED",
+      "start_period": 7,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M41-7-L2",
+      "day": "FRI",
+      "start_period": 1,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M41-7-L1",
+      "day": "FRI",
+      "start_period": 3,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M41-8-L1",
+      "day": "FRI",
+      "start_period": 5,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M53-9-T1",
+      "day": "THU",
+      "start_period": 2,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M53-9-L1",
+      "day": "THU",
+      "start_period": 7,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M53-8-L1",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M53-10-L2",
+      "day": "THU",
+      "start_period": 8,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M53-7-L1",
+      "day": "MON",
+      "start_period": 9,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M53-7-L2",
+      "day": "WED",
+      "start_period": 2,
+      "room_id": "AV-C18"
+    },
+    {
+      "session_id": "AV-M53-7-T1",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-C15"
+    },
+    {
+      "session_id": "AV-M53-8-L2",
+      "day": "WED",
+      "start_period": 6,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M53-10-T1",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M53-10-L1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M53-9-L2",
+      "day": "TUE",
+      "start_period": 1,
+      "room_id": "AV-C12"
+    },
+    {
+      "session_id": "AV-M53-8-T1",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M51-7-T1",
+      "day": "TUE",
+      "start_period": 5,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M51-9-L1",
+      "day": "MON",
+      "start_period": 3,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M51-9-L2",
+      "day": "MON",
+      "start_period": 2,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M51-7-L1",
+      "day": "WED",
+      "start_period": 1,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M51-8-L1",
+      "day": "THU",
+      "start_period": 7,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M51-10-T1",
+      "day": "THU",
+      "start_period": 9,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M51-9-T1",
+      "day": "FRI",
+      "start_period": 7,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M51-7-L2",
+      "day": "WED",
+      "start_period": 4,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M51-10-L2",
+      "day": "TUE",
+      "start_period": 8,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M51-10-L1",
+      "day": "THU",
+      "start_period": 8,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M51-8-T1",
+      "day": "MON",
+      "start_period": 4,
+      "room_id": "AV-C17"
+    },
+    {
+      "session_id": "AV-M51-8-L2",
+      "day": "FRI",
+      "start_period": 9,
+      "room_id": "AV-C16"
+    },
+    {
+      "session_id": "AV-M55-8-T1",
+      "day": "THU",
+      "start_period": 8,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M55-8-L1",
+      "day": "THU",
+      "start_period": 5,
+      "room_id": "AV-H21"
+    },
+    {
+      "session_id": "AV-M55-10-L2",
+      "day": "FRI",
+      "start_period": 8,
+      "room_id": "AV-C13"
+    },
+    {
+      "session_id": "AV-M55-9-L2",
+      "day": "MON",
+      "start_period": 1,
+      "room_id": "AV-C14"
+    },
+    {
+      "session_id": "AV-M55-7-T1",
+      "day": "TUE",
+      "start_period": 1,
+      "room_id": "AV-DOME"
+    },
+    {
+      "session_id": "AV-M55-10-T1",
+      "day": "THU",
+      "start_period": 1,
+      "room_id": "AV-H23"
+    },
+    {
+      "session_id": "AV-M55-9-T1",
+      "day": "MON",
+      "start_period": 5,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M55-7-L2",
+      "day": "TUE",
+      "start_period": 2,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M55-10-L1",
+      "day": "MON",
+      "start_period": 6,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M55-7-L1",
+      "day": "WED",
+      "start_period": 9,
+      "room_id": "AV-H24"
+    },
+    {
+      "session_id": "AV-M55-9-L1",
+      "day": "FRI",
+      "start_period": 4,
+      "room_id": "AV-H22"
+    },
+    {
+      "session_id": "AV-M55-8-L2",
+      "day": "TUE",
+      "start_period": 9,
+      "room_id": "AV-C13"
+    }
+  ],
+  "fest_week": {
+    "bookings": [
+      {
+        "request_id": "AV-B201",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-C11"
+      },
+      {
+        "request_id": "AV-B205",
+        "status": "rejected",
+        "reason": "Request withdrawn before allocation."
+      },
+      {
+        "request_id": "AV-B209",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-H21"
+      },
+      {
+        "request_id": "AV-B213",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-L11"
+      },
+      {
+        "request_id": "AV-B217",
+        "status": "rejected",
+        "reason": "Request withdrawn before allocation."
+      },
+      {
+        "request_id": "AV-B221",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-L33"
+      },
+      {
+        "request_id": "AV-B225",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-DOME"
+      },
+      {
+        "request_id": "AV-B229",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "TUE",
+        "start_period": 11,
+        "end_period": 11,
+        "room_id": "AV-H21"
+      },
+      {
+        "request_id": "AV-B202",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-C12"
+      },
+      {
+        "request_id": "AV-B206",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-C16"
+      },
+      {
+        "request_id": "AV-B210",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-H22"
+      },
+      {
+        "request_id": "AV-B214",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-L12"
+      },
+      {
+        "request_id": "AV-B218",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-L23"
+      },
+      {
+        "request_id": "AV-B222",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-L41"
+      },
+      {
+        "request_id": "AV-B226",
+        "status": "rejected",
+        "reason": "No collision-free venue in the exact requested window; alternative search omitted by this reference generator."
+      },
+      {
+        "request_id": "AV-B230",
+        "status": "rejected",
+        "reason": "No collision-free venue in the exact requested window; alternative search omitted by this reference generator."
+      },
+      {
+        "request_id": "AV-B203",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-C13"
+      },
+      {
+        "request_id": "AV-B207",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-C17"
+      },
+      {
+        "request_id": "AV-B211",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-H23"
+      },
+      {
+        "request_id": "AV-B215",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-L13"
+      },
+      {
+        "request_id": "AV-B219",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-L31"
+      },
+      {
+        "request_id": "AV-B223",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-L42"
+      },
+      {
+        "request_id": "AV-B204",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-C14"
+      },
+      {
+        "request_id": "AV-B208",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-C18"
+      },
+      {
+        "request_id": "AV-B212",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-H24"
+      },
+      {
+        "request_id": "AV-B216",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-L21"
+      },
+      {
+        "request_id": "AV-B220",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-L32"
+      },
+      {
+        "request_id": "AV-B224",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 12,
+        "end_period": 13,
+        "room_id": "AV-L43"
+      },
+      {
+        "request_id": "AV-B227",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "MON",
+        "start_period": 10,
+        "end_period": 10,
+        "room_id": "AV-F32"
+      },
+      {
+        "request_id": "AV-B228",
+        "status": "rejected",
+        "reason": "Request withdrawn before allocation."
+      },
+      {
+        "request_id": "AV-B231",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "FRI",
+        "start_period": 10,
+        "end_period": 11,
+        "room_id": "AV-F31"
+      },
+      {
+        "request_id": "AV-B232",
+        "status": "approved",
+        "reason": "Code checked capacity, accessibility, allowed use, features, availability, role cap and collision-free exact window.",
+        "day": "FRI",
+        "start_period": 10,
+        "end_period": 11,
+        "room_id": "AV-F32"
+      }
+    ],
+    "session_overrides": []
+  },
+  "exams": [
+    {
+      "exam_id": "AV-XO81",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-C11",
+        "AV-L11",
+        "AV-C13"
+      ]
+    },
+    {
+      "exam_id": "AV-XO82",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-C11",
+        "AV-L11",
+        "AV-C13"
+      ]
+    },
+    {
+      "exam_id": "AV-XO83",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-C11",
+        "AV-L11",
+        "AV-C13"
+      ]
+    },
+    {
+      "exam_id": "AV-XCOM901",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-L21",
+        "AV-L13",
+        "AV-C14"
+      ]
+    },
+    {
+      "exam_id": "AV-X41-7",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-L21",
+        "AV-L13"
+      ]
+    },
+    {
+      "exam_id": "AV-X41-8",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-L21",
+        "AV-L13"
+      ]
+    },
+    {
+      "exam_id": "AV-X41-9",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-C11",
+        "AV-L11"
+      ]
+    },
+    {
+      "exam_id": "AV-X41-10",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "AV-C11",
+        "AV-C13"
+      ]
+    },
+    {
+      "exam_id": "AV-X42-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-C12",
+        "AV-L12"
+      ]
+    },
+    {
+      "exam_id": "AV-X42-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-C12",
+        "AV-L12"
+      ]
+    },
+    {
+      "exam_id": "AV-X42-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-C12",
+        "AV-L12"
+      ]
+    },
+    {
+      "exam_id": "AV-X42-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-C12",
+        "AV-L12"
+      ]
+    },
+    {
+      "exam_id": "AV-X43-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-L22",
+        "AV-L31"
+      ]
+    },
+    {
+      "exam_id": "AV-X43-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-C14",
+        "AV-L22"
+      ]
+    },
+    {
+      "exam_id": "AV-X43-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-C14",
+        "AV-L22"
+      ]
+    },
+    {
+      "exam_id": "AV-X43-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-C13",
+        "AV-L21"
+      ]
+    },
+    {
+      "exam_id": "AV-X44-7",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-L13",
+        "AV-C14"
+      ]
+    },
+    {
+      "exam_id": "AV-X44-8",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "AV-C12",
+        "AV-L12"
+      ]
+    },
+    {
+      "exam_id": "AV-X44-9",
+      "day": "WED",
+      "session": "PM",
+      "rooms": [
+        "AV-C11",
+        "AV-C12"
+      ]
+    },
+    {
+      "exam_id": "AV-X44-10",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "AV-C11",
+        "AV-C12"
+      ]
+    },
+    {
+      "exam_id": "AV-X45-7",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-L31",
+        "AV-L23"
+      ]
+    },
+    {
+      "exam_id": "AV-X45-8",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-L31",
+        "AV-L23"
+      ]
+    },
+    {
+      "exam_id": "AV-X45-9",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-L22",
+        "AV-L31"
+      ]
+    },
+    {
+      "exam_id": "AV-X45-10",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "AV-L21",
+        "AV-L13"
+      ]
+    },
+    {
+      "exam_id": "AV-X46-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-L23",
+        "AV-L41"
+      ]
+    },
+    {
+      "exam_id": "AV-X46-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-L41",
+        "AV-C16"
+      ]
+    },
+    {
+      "exam_id": "AV-X46-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-L41",
+        "AV-C16"
+      ]
+    },
+    {
+      "exam_id": "AV-X46-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-L23",
+        "AV-L41"
+      ]
+    },
+    {
+      "exam_id": "AV-X47-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-C15",
+        "AV-L32"
+      ]
+    },
+    {
+      "exam_id": "AV-X47-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-C15",
+        "AV-L32"
+      ]
+    },
+    {
+      "exam_id": "AV-X47-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-C15",
+        "AV-L32"
+      ]
+    },
+    {
+      "exam_id": "AV-X47-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-C15",
+        "AV-L32"
+      ]
+    },
+    {
+      "exam_id": "AV-X48-7",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-C16",
+        "AV-L33"
+      ]
+    },
+    {
+      "exam_id": "AV-X48-8",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "AV-C14",
+        "AV-L22"
+      ]
+    },
+    {
+      "exam_id": "AV-X48-9",
+      "day": "WED",
+      "session": "PM",
+      "rooms": [
+        "AV-L11",
+        "AV-L12"
+      ]
+    },
+    {
+      "exam_id": "AV-X48-10",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "AV-L11",
+        "AV-L12"
+      ]
+    },
+    {
+      "exam_id": "AV-X49-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-C16",
+        "AV-L33"
+      ]
+    },
+    {
+      "exam_id": "AV-X49-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-L33",
+        "AV-L42"
+      ]
+    },
+    {
+      "exam_id": "AV-X49-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-L33",
+        "AV-L42"
+      ]
+    },
+    {
+      "exam_id": "AV-X49-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-L42",
+        "AV-C17"
+      ]
+    },
+    {
+      "exam_id": "AV-X50-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-L42",
+        "AV-C17"
+      ]
+    },
+    {
+      "exam_id": "AV-X50-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-C17",
+        "AV-L43"
+      ]
+    },
+    {
+      "exam_id": "AV-X50-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-C17",
+        "AV-L43"
+      ]
+    },
+    {
+      "exam_id": "AV-X50-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-L43",
+        "AV-C18"
+      ]
+    },
+    {
+      "exam_id": "AV-X51-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-L43"
+      ]
+    },
+    {
+      "exam_id": "AV-X51-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-F31"
+      ]
+    },
+    {
+      "exam_id": "AV-X51-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-F31"
+      ]
+    },
+    {
+      "exam_id": "AV-X51-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-F31"
+      ]
+    },
+    {
+      "exam_id": "AV-X52-7",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-F32"
+      ]
+    },
+    {
+      "exam_id": "AV-X52-8",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "AV-L31",
+        "AV-L23"
+      ]
+    },
+    {
+      "exam_id": "AV-X52-9",
+      "day": "WED",
+      "session": "PM",
+      "rooms": [
+        "AV-C13",
+        "AV-L21"
+      ]
+    },
+    {
+      "exam_id": "AV-X52-10",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "AV-C13",
+        "AV-L21"
+      ]
+    },
+    {
+      "exam_id": "AV-X53-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-C18"
+      ]
+    },
+    {
+      "exam_id": "AV-X53-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-C18"
+      ]
+    },
+    {
+      "exam_id": "AV-X53-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-C18"
+      ]
+    },
+    {
+      "exam_id": "AV-X53-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-H21"
+      ]
+    },
+    {
+      "exam_id": "AV-X54-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-F31",
+        "AV-F32"
+      ]
+    },
+    {
+      "exam_id": "AV-X54-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-F32"
+      ]
+    },
+    {
+      "exam_id": "AV-X54-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-F32"
+      ]
+    },
+    {
+      "exam_id": "AV-X54-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-H22"
+      ]
+    },
+    {
+      "exam_id": "AV-X55-7",
+      "day": "MON",
+      "session": "AM",
+      "rooms": [
+        "AV-H21"
+      ]
+    },
+    {
+      "exam_id": "AV-X55-8",
+      "day": "MON",
+      "session": "PM",
+      "rooms": [
+        "AV-H21"
+      ]
+    },
+    {
+      "exam_id": "AV-X55-9",
+      "day": "TUE",
+      "session": "AM",
+      "rooms": [
+        "AV-H21"
+      ]
+    },
+    {
+      "exam_id": "AV-X55-10",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-H23"
+      ]
+    },
+    {
+      "exam_id": "AV-X56-7",
+      "day": "TUE",
+      "session": "PM",
+      "rooms": [
+        "AV-H24"
+      ]
+    },
+    {
+      "exam_id": "AV-X56-8",
+      "day": "WED",
+      "session": "AM",
+      "rooms": [
+        "AV-L41",
+        "AV-C16"
+      ]
+    },
+    {
+      "exam_id": "AV-X56-9",
+      "day": "WED",
+      "session": "PM",
+      "rooms": [
+        "AV-L13",
+        "AV-C14"
+      ]
+    },
+    {
+      "exam_id": "AV-X56-10",
+      "day": "THU",
+      "session": "AM",
+      "rooms": [
+        "AV-L13",
+        "AV-C14"
+      ]
+    }
+  ]
+}
