@@ -64,9 +64,6 @@ export const App: React.FC = () => {
         onGenerateSchedule={scheduleState.generate}
         onApplySampleDisruption={() => disruption.apply()}
         isGenerating={scheduleState.generating}
-        databaseStatus={scheduleState.appState?.database_status}
-        onSyncDatabase={scheduleState.syncDb}
-        isSyncingDb={scheduleState.syncingDb}
       />
 
       {/* 2. Section Navigation Tabs */}
@@ -74,8 +71,9 @@ export const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
           <nav className="flex items-center gap-6">
             <button
+              type="button"
               onClick={() => setActiveTab('timetables')}
-              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${
                 activeTab === 'timetables'
                   ? 'border-blue-700 text-blue-700'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -86,8 +84,9 @@ export const App: React.FC = () => {
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('copilot')}
-              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${
                 activeTab === 'copilot'
                   ? 'border-blue-700 text-blue-700'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -98,20 +97,22 @@ export const App: React.FC = () => {
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('spectra')}
-              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${
                 activeTab === 'spectra'
                   ? 'border-blue-700 text-blue-700'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Spectra queue ({scheduleState.bookings.length})</span>
+              <span>Venue queues ({scheduleState.bookings.length})</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setActiveTab('audit')}
-              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors ${
+              className={`inline-flex items-center gap-1.5 py-3 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 ${
                 activeTab === 'audit'
                   ? 'border-blue-700 text-blue-700'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
@@ -139,7 +140,7 @@ export const App: React.FC = () => {
             <span>Loading schedule state...</span>
           </div>
         ) : (
-          <>
+          <div className="mom-animate-fade-up">
             {activeTab === 'timetables' && (
               <TimetableGridView
                 sessions={scheduleState.activeSessions}
@@ -199,7 +200,7 @@ export const App: React.FC = () => {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </main>
 

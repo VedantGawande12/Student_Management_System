@@ -75,7 +75,15 @@ def solve_timetable(data, baseline=None, timeout_sec=30):
             r for r in data["rooms"]
             if r["capacity"] >= s["size"]
             and r["type"] in s["room_types"]
-            and (not s.get("needs_accessible") or r["accessible"])
+            and kind in r.get("allowed_uses", [])
+            and (
+                not (
+                    s.get("needs_accessible")
+                    or faculty[fid].get("needs_accessible")
+                    or any(ctx.groups[gid].get("needs_accessible") for gid in s["groups"])
+                )
+                or r["accessible"]
+            )
         ]
         
         if kind == "lab":
@@ -234,7 +242,8 @@ def solve_exams(data, timeout_sec=20):
     Stage 2: Midsem Exam Solver.
     Schedules all exams across MON-SAT AM & PM.
     Enforces halved room capacity, room allowed uses, no double bookings,
-    and at most 1 exam per group per day (guaranteeing 0 exam soft penalty).
+    and no same-session group conflicts. Extra exams for a group on the same
+    day are allowed with the validator's soft penalty of 5 per extra exam.
     """
     ctx = validator.Ctx(data)
     model = cp_model.CpModel()
@@ -248,44 +257,98 @@ def solve_exams(data, timeout_sec=20):
     slots = [(d, s) for d in days for s in sessions]
     
     exam_rooms = [r for r in data["rooms"] if "exam" in r["allowed_uses"]]
-    
+    exam_periods = {}
+    calendar_periods = data["calendar"].get("periods", [])
+    for exam_session in exam_cal["sessions"]:
+        session_start = exam_session.get("start")
+        session_end = exam_session.get("end")
+        if session_start is None or session_end is None:
+            exam_periods[exam_session["id"]] = set()
+            continue
+        exam_periods[exam_session["id"]] = {
+            period["id"]
+            for period in calendar_periods
+            if period["start"] < session_end and period["end"] > session_start
+        }
+
     slot_vars = {}
     room_vars = {}
+    exam_rooms_by_id = {}
     
     for e in exams:
         eid = e["id"]
+        needs_accessible = any(
+            ctx.groups[gid].get("needs_accessible")
+            for gid in e["groups"]
+        )
+        exam_rooms_by_id[eid] = [
+            r for r in exam_rooms
+            if (not needs_accessible or r["accessible"])
+        ]
         for slot in slots:
             slot_vars[(eid, slot)] = model.NewBoolVar(f"slot_{eid}_{slot[0]}_{slot[1]}")
-            for r in exam_rooms:
+            for r in exam_rooms_by_id[eid]:
                 rid = r["id"]
                 room_vars[(eid, slot, rid)] = model.NewBoolVar(f"room_{eid}_{slot[0]}_{slot[1]}_{rid}")
                 model.Add(room_vars[(eid, slot, rid)] <= slot_vars[(eid, slot)])
+                if any(
+                    (slot[0], period) in ctx.room_un[rid]
+                    for period in exam_periods.get(slot[1], set())
+                ):
+                    model.Add(room_vars[(eid, slot, rid)] == 0)
                 
         model.AddExactlyOne(slot_vars[(eid, slot)] for slot in slots)
         
         for slot in slots:
             model.Add(
-                sum((r["capacity"] // 2) * room_vars[(eid, slot, r["id"])] for r in exam_rooms)
+                sum(
+                    (r["capacity"] // 2) * room_vars[(eid, slot, r["id"])]
+                    for r in exam_rooms_by_id[eid]
+                )
                 >= e["size"] * slot_vars[(eid, slot)]
             )
             
     for slot in slots:
         for r in exam_rooms:
             rid = r["id"]
-            model.Add(sum(room_vars[(e["id"], slot, rid)] for e in exams) <= 1)
+            room_use = [
+                room_vars[(e["id"], slot, rid)]
+                for e in exams
+                if (e["id"], slot, rid) in room_vars
+            ]
+            if room_use:
+                model.Add(sum(room_use) <= 1)
             
-    # At most 1 exam per group per day to guarantee exam_soft_penalty = 0
+    # A group cannot sit two exams in the same session.
+    for g in data["student_groups"]:
+        gid = g["id"]
+        exams_for_g = [e["id"] for e in exams if gid in e["groups"]]
+        for slot in slots:
+            model.Add(sum(slot_vars[(eid, slot)] for eid in exams_for_g) <= 1)
+
+    # Match validator.check_exams: each exam after the first for a group/day
+    # adds 5 soft-penalty points. Minimize this penalty before room usage.
+    daily_excess = []
     for g in data["student_groups"]:
         gid = g["id"]
         exams_for_g = [e["id"] for e in exams if gid in e["groups"]]
         for d in days:
-            model.Add(
-                sum(slot_vars[(eid, (d, s))] for eid in exams_for_g for s in sessions) <= 1
-            )
+            group_day_slots = [
+                slot_vars[(eid, (d, session))]
+                for eid in exams_for_g
+                for session in sessions
+            ]
+            if group_day_slots:
+                has_exam = model.NewBoolVar(f"group_{gid}_{d}_has_exam")
+                model.AddMaxEquality(has_exam, group_day_slots)
+                daily_excess.append(sum(group_day_slots) - has_exam)
             
-    # Minimize total rooms used
-    obj = sum(room_vars[(e["id"], slot, r["id"])] for e in exams for slot in slots for r in exam_rooms)
-    model.Minimize(obj)
+    # Preserve the room-efficiency objective as a tie-breaker after the
+    # validator-aligned exam soft penalty.
+    room_count = sum(room_vars.values())
+    max_room_count = len(exams) * len(exam_rooms)
+    penalty_weight = max_room_count + 1
+    model.Minimize(5 * penalty_weight * sum(daily_excess) + room_count)
     
     solver = cp_model.CpSolver()
     solver.parameters.max_time_in_seconds = timeout_sec
@@ -298,7 +361,11 @@ def solve_exams(data, timeout_sec=20):
             eid = e["id"]
             for slot in slots:
                 if solver.Value(slot_vars[(eid, slot)]) == 1:
-                    chosen_rooms = [r["id"] for r in exam_rooms if solver.Value(room_vars[(eid, slot, r["id"])]) == 1]
+                    chosen_rooms = [
+                        r["id"]
+                        for r in exam_rooms_by_id[eid]
+                        if solver.Value(room_vars[(eid, slot, r["id"])]) == 1
+                    ]
                     exams_out.append({
                         "exam_id": eid,
                         "day": slot[0],
@@ -511,10 +578,6 @@ def solve_bookings(data, base_timetable):
                 "reason": reason
             })
             
-    # Sort decisions back to order of booking_requests for clean UI/export
-    req_index_map = {req["id"]: i for i, req in enumerate(reqs)}
-    decisions.sort(key=lambda d: req_index_map.get(d["request_id"], 999))
-    
     return {"bookings": decisions, "session_overrides": overrides}
 
 

@@ -11,8 +11,7 @@ interface ValidatorHudBarProps {
 }
 
 export const ValidatorHudBar: React.FC<ValidatorHudBarProps> = ({
-  report,
-  hasAfterSchedule
+  report
 }) => {
   const hardCount = report?.hard_violation_count ?? 0;
   const isClean = hardCount === 0 && (report?.bookings?.priority_inversions?.length || 0) === 0;
@@ -87,7 +86,7 @@ export const ValidatorHudBar: React.FC<ValidatorHudBarProps> = ({
             <a
               href={`${API_BASE}/export/schedule`}
               download="schedule.json"
-              className="inline-flex items-center gap-1 px-2 py-1 text-slate-700 hover:text-blue-700 border border-slate-300 hover:border-slate-400 bg-white rounded font-medium transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-slate-700 hover:text-blue-700 border border-slate-300 hover:border-slate-400 bg-white rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700"
               title="Download exports/schedule.json"
             >
               <Download className="w-3 h-3 text-slate-500" />
@@ -96,7 +95,7 @@ export const ValidatorHudBar: React.FC<ValidatorHudBarProps> = ({
             <a
               href={`${API_BASE}/export/schedule-after`}
               download="schedule_after.json"
-              className="inline-flex items-center gap-1 px-2 py-1 text-slate-700 hover:text-amber-800 border border-slate-300 hover:border-slate-400 bg-white rounded font-medium transition-colors"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-slate-700 hover:text-amber-800 border border-slate-300 hover:border-slate-400 bg-white rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700"
               title="Download exports/schedule_after.json"
             >
               <Download className="w-3 h-3 text-slate-500" />

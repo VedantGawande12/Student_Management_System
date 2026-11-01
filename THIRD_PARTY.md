@@ -27,7 +27,7 @@ This repository leverages the following open-source libraries, frameworks, and d
 
 ---
 
-## 2. Frontend (React 18 + TypeScript + Tailwind)
+## 2. Frontend (React 18 / Next.js + TypeScript + Tailwind)
 - **React (`react`, `react-dom` v18.3+)**:
   - **Purpose:** Modern component-based declarative user interface following strict headless UI separation.
   - **License:** MIT.
