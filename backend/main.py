@@ -484,6 +484,15 @@ def apply_disruption(disruption: Optional[Dict[str, Any]] = None, user: Dict[str
             "diff": diff,
             "disrupted_schedule": sched_after
         }
+    except solver.InfeasibleScheduleError as e:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "Infeasible Disruption",
+                "message": str(e),
+                "conflicts": e.conflicts
+            }
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -858,6 +867,18 @@ def move_session(req: SessionMoveRequest, user: Dict[str, Any] = Depends(get_cur
     old_start = session_item["start_period"]
     old_room = session_item["room_id"]
     
+    # Enforce all hard constraints (H1-H14) before committing manual move
+    test_assign = {s["session_id"]: (s["day"], s["start_period"], s["room_id"]) for s in state.active_schedule.get("sessions", [])}
+    test_assign[req.session_id] = (req.day, req.start_period, req.room_id)
+    ctx = validator.Ctx(state.active_data)
+    violations, _ = validator.check_timetable(ctx, test_assign, "regular")
+    if violations:
+        violation_messages = [f"[{v.get('rule', 'HARD')}] {v.get('detail', 'Constraint violation')}" for v in violations]
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot move session: Violates hard constraint(s): {'; '.join(violation_messages[:3])}"
+        )
+
     session_item["day"] = req.day
     session_item["start_period"] = req.start_period
     session_item["room_id"] = req.room_id

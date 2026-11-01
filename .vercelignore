@@ -1,0 +1,15 @@
+backend
+data
+examples
+exports
+supabase
+testing
+tests
+__pycache__
+*.py
+*.pyc
+*.md
+.env
+.env.*
+.agents
+

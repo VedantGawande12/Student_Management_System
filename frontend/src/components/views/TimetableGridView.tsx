@@ -8,7 +8,8 @@ import {
   ExamScheduled,
   UserAccount,
   BookingRequest,
-  DisruptionDiff
+  DisruptionDiff,
+  ValidatorReport
 } from '../../core/types';
 import { checkFacultyChange, applySessionMove } from '../../core/api';
 import {
@@ -16,13 +17,14 @@ import {
   Filter,
   X,
   Check,
-  AlertCircle,
-  Clock,
+  AlertTriangle,
   Sparkles,
   PartyPopper,
   GraduationCap,
-  ArrowRight,
-  Info
+  Percent,
+  Clock,
+  CheckCircle2,
+  Coffee
 } from 'lucide-react';
 
 interface TimetableGridViewProps {
@@ -58,33 +60,25 @@ interface TimetableGridViewProps {
     displaced_by: string;
   }>;
   lastApprovedDiff?: DisruptionDiff | null;
+  validatorReport?: ValidatorReport | null;
   onRefresh?: () => Promise<void> | void;
 }
 
-// Calendar day metadata with integrated Spring 2027 academic dates
-const TEACHING_DAYS = [
-  { code: 'MON', label: 'Monday', termDates: 'Weeks 1–6, 8–14' },
-  { code: 'TUE', label: 'Tuesday', termDates: 'Weeks 1–6, 8–14' },
-  { code: 'WED', label: 'Wednesday', termDates: 'Weeks 1–6, 8–14' },
-  { code: 'THU', label: 'Thursday', termDates: 'Weeks 1–6, 8–14' },
-  { code: 'FRI', label: 'Friday', termDates: 'Weeks 1–6, 8–14' },
-];
-
-const WEEK7_DAYS = [
-  { code: 'MON', label: 'Mon', date: '15 Feb 2027', festTheme: 'Inauguration & Tech Competitions' },
-  { code: 'TUE', label: 'Tue', date: '16 Feb 2027', festTheme: 'Hackathons & Robotics Arena' },
-  { code: 'WED', label: 'Wed', date: '17 Feb 2027', festTheme: 'Literary & Fine Arts Day' },
-  { code: 'THU', label: 'Thu', date: '18 Feb 2027', festTheme: 'Theatre & Dramatics Showcase' },
-  { code: 'FRI', label: 'Fri', date: '19 Feb 2027', festTheme: 'Star Night Gala & Valedictory' },
+const WEEK_DAYS = [
+  { code: 'MON', label: 'Monday' },
+  { code: 'TUE', label: 'Tuesday' },
+  { code: 'WED', label: 'Wednesday' },
+  { code: 'THU', label: 'Thursday' },
+  { code: 'FRI', label: 'Friday' },
 ];
 
 const EXAM_DAYS = [
-  { code: 'MON', label: 'Mon', date: '22 Feb 2027' },
-  { code: 'TUE', label: 'Tue', date: '23 Feb 2027' },
-  { code: 'WED', label: 'Wed', date: '24 Feb 2027' },
-  { code: 'THU', label: 'Thu', date: '25 Feb 2027' },
-  { code: 'FRI', label: 'Fri', date: '26 Feb 2027' },
-  { code: 'SAT', label: 'Sat', date: '27 Feb 2027' },
+  { code: 'MON', label: 'Monday', date: '22 Feb' },
+  { code: 'TUE', label: 'Tuesday', date: '23 Feb' },
+  { code: 'WED', label: 'Wednesday', date: '24 Feb' },
+  { code: 'THU', label: 'Thursday', date: '25 Feb' },
+  { code: 'FRI', label: 'Friday', date: '26 Feb' },
+  { code: 'SAT', label: 'Saturday', date: '27 Feb' },
 ];
 
 const PERIODS = [
@@ -93,12 +87,12 @@ const PERIODS = [
   { p: 3, time: '10:00', label: 'P3' },
   { p: 4, time: '11:00', label: 'P4' },
   { p: 5, time: '12:00', label: 'P5' },
-  // Lunch 13:00 - 14:00
+  // Lunch Break 13:00 - 14:00
   { p: 6, time: '14:00', label: 'P6' },
   { p: 7, time: '15:00', label: 'P7' },
   { p: 8, time: '16:00', label: 'P8' },
   { p: 9, time: '17:00', label: 'P9' },
-  // Event periods (Spectra week 7)
+  // Event periods (Week 7 Fest only)
   { p: 10, time: '18:00', label: 'P10' },
   { p: 11, time: '19:00', label: 'P11' },
   { p: 12, time: '20:00', label: 'P12' },
@@ -115,7 +109,6 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
   examsMeta = [],
   viewMode,
   onViewModeChange,
-  currentUser,
   filterType,
   filterValue,
   onFilterTypeChange,
@@ -124,6 +117,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
   bookingRequests = [],
   sessionOverrides = [],
   lastApprovedDiff,
+  validatorReport,
   onRefresh
 }) => {
   const [selectedSession, setSelectedSession] = useState<{
@@ -147,7 +141,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
   const [isApplyingMove, setIsApplyingMove] = useState(false);
   const [moveSuccess, setMoveSuccess] = useState<string | null>(null);
 
-  // Quick lookup maps
+  // Lookup maps
   const metaMap = new Map<string, SessionItem>();
   for (const s of sessionMeta) metaMap.set(s.id, s);
 
@@ -169,13 +163,33 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
     overrideMap.set(o.session_id, o);
   }
 
+  // Hard violations map by session id
+  const violationBySession = new Map<string, string>();
+  if (validatorReport?.hard_violations) {
+    for (const hv of validatorReport.hard_violations) {
+      if (hv.where) {
+        violationBySession.set(hv.where, hv.detail || hv.rule);
+      }
+    }
+  }
+
   // Group academic sessions by (day, period)
   const gridMap = new Map<string, Array<{
     scheduled: ScheduledSession;
     meta: SessionItem;
     diffChange?: any;
     override?: any;
+    errorNote?: string;
   }>>();
+
+  // Also collect all sessions by slot to detect clashes accurately across all data
+  const rawSlotMap = new Map<string, ScheduledSession[]>();
+  for (const s of sessions) {
+    const k = `${s.day}-${s.start_period}`;
+    const list = rawSlotMap.get(k) || [];
+    list.push(s);
+    rawSlotMap.set(k, list);
+  }
 
   for (const s of sessions) {
     const meta = metaMap.get(s.session_id);
@@ -188,10 +202,11 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
 
     const diffChange = diffMap.get(s.session_id);
     const override = overrideMap.get(s.session_id);
+    const errorNote = violationBySession.get(s.session_id);
 
     const key = `${s.day}-${s.start_period}`;
     const list = gridMap.get(key) || [];
-    list.push({ scheduled: s, meta, diffChange, override });
+    list.push({ scheduled: s, meta, diffChange, override, errorNote });
     gridMap.set(key, list);
   }
 
@@ -256,7 +271,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
         start_period: Number(targetPeriod),
         room_id: selectedMoveRoom || selectedSession.scheduled.room_id
       });
-      setMoveSuccess(`Session moved dynamically to ${targetDay} Period ${targetPeriod} (${selectedMoveRoom || selectedSession.scheduled.room_id})!`);
+      setMoveSuccess(`Session moved to ${targetDay} Period ${targetPeriod} (${selectedMoveRoom || selectedSession.scheduled.room_id})!`);
       if (onRefresh) {
         await onRefresh();
       }
@@ -264,7 +279,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
         setSelectedSession(null);
         setChangeResult(null);
         setMoveSuccess(null);
-      }, 1200);
+      }, 1000);
     } catch (e: any) {
       setChangeResult({ ...changeResult, message: `Failed to move session: ${e.message}` });
     } finally {
@@ -272,100 +287,95 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
     }
   };
 
-  const currentDays = viewMode === 'fest_week' ? WEEK7_DAYS : TEACHING_DAYS;
   const numPeriods = viewMode === 'fest_week' ? 13 : 9;
 
+  // ── Utilization & Operational Statistics ────────────────────────────────────
+  const totalTeachingSlots = rooms.length * 5 * 8;
+  const occupiedSlots = sessions.reduce((acc, s) => {
+    const meta = metaMap.get(s.session_id);
+    return acc + (meta?.duration || 1);
+  }, 0);
+  const campusUtilization = totalTeachingSlots > 0 ? Math.min(100, Math.round((occupiedSlots / totalTeachingSlots) * 100)) : 0;
+
+  let selectedRoomUtil: number | null = null;
+  if (filterType === 'room' && filterValue) {
+    const roomOccupied = sessions
+      .filter(s => s.room_id === filterValue)
+      .reduce((acc, s) => {
+        const meta = metaMap.get(s.session_id);
+        return acc + (meta?.duration || 1);
+      }, 0);
+    selectedRoomUtil = Math.min(100, Math.round((roomOccupied / 40) * 100));
+  }
+
+  const pendingCount = (bookingRequests || []).filter(b => {
+    const dec = (festBookings || []).find(f => f.request_id === b.id);
+    return !dec || dec.status === 'pending';
+  }).length;
+
+  let totalConflictsCount = 0;
+  for (const slotSessions of rawSlotMap.values()) {
+    const roomCounts = new Map<string, number>();
+    for (const s of slotSessions) {
+      roomCounts.set(s.room_id, (roomCounts.get(s.room_id) || 0) + 1);
+    }
+    for (const cnt of roomCounts.values()) {
+      if (cnt > 1) totalConflictsCount += 1;
+    }
+  }
+  if (validatorReport?.hard_violations) {
+    totalConflictsCount += validatorReport.hard_violations.length;
+  }
+
   return (
-    <div className="space-y-3.5">
-      {/* 1. Academic Calendar Header Banner with Dates */}
-      <div className="bg-white p-3.5 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            {viewMode === 'regular' && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 text-blue-900 border border-blue-200">
-                Regular Term
-              </span>
-            )}
-            {viewMode === 'fest_week' && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-900 border border-purple-200 flex items-center gap-1">
-                <PartyPopper className="w-3 h-3 text-purple-700" />
-                Week 7 · Spectra '27
-              </span>
-            )}
-            {viewMode === 'exams' && (
-              <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1">
-                <GraduationCap className="w-3 h-3 text-amber-700" />
-                Week 8 · Midsem Exams
-              </span>
-            )}
-            <h2 className="text-sm font-bold text-slate-900">
-              {viewMode === 'regular' && 'Spring Semester 2027 — Teaching Timetable (Weeks 1–6, 8–14)'}
-              {viewMode === 'fest_week' && 'Week 7 Festival Timetable — Spectra \'27 (15 Feb – 19 Feb 2027)'}
-              {viewMode === 'exams' && 'Mid-Semester Examination Schedule (22 Feb – 27 Feb 2027)'}
-            </h2>
-          </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {viewMode === 'regular' && 'Daily lecture, lab & tutorial sessions (08:00–18:00) • Mandatory lunch divider 13:00–14:00 • Dynamic change tracking enabled'}
-            {viewMode === 'fest_week' && 'Daytime instructional slots with displaced overrides + Evening cultural & venue bookings (P10–P13 · 18:00–22:00)'}
-            {viewMode === 'exams' && '41 exams scheduled • AM (09:30–11:30) and PM (14:00–16:00) sessions • Halved room capacity enforced'}
-          </p>
-        </div>
-
-        {/* Dynamic Status Badges */}
-        <div className="flex items-center gap-2 text-xs">
-          {lastApprovedDiff && (lastApprovedDiff.sessions_moved_count > 0) && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-50 border border-emerald-300 text-emerald-800 font-medium">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{lastApprovedDiff.sessions_moved_count} approved changes live</span>
-            </div>
-          )}
-
-          {viewMode === 'fest_week' && festBookings.filter(b => b.status === 'approved').length > 0 && (
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-50 border border-purple-300 text-purple-900 font-medium">
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
-              <span>{festBookings.filter(b => b.status === 'approved').length} approved fest events active</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 2. Mode Selector & Multi-Pivot Filter Bar */}
+    <div className="space-y-3">
+      {/* 1. Clean Top Bar: View Mode Selector + Filters (No Jargon Stats) */}
       <div className="bg-white p-3 rounded-lg border border-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-xs">
-        {/* Sub-view switcher */}
-        <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded">
+        {/* Timetable Sub-View Selector */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded">
           <button
             onClick={() => onViewModeChange('regular')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
               viewMode === 'regular'
-                ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                ? 'bg-white text-blue-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Teaching timetable
+            <Calendar className="w-3.5 h-3.5 text-blue-700" />
+            <span>Weekly teaching timetable</span>
           </button>
+
           <button
             onClick={() => onViewModeChange('fest_week')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
               viewMode === 'fest_week'
-                ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                ? 'bg-white text-purple-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Spectra week (week 7)
+            <PartyPopper className="w-3.5 h-3.5 text-purple-600" />
+            <span>Week 7 (Spectra '27)</span>
+            {festBookings.filter(b => b.status === 'approved').length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800 font-bold border border-purple-200">
+                {festBookings.filter(b => b.status === 'approved').length}
+              </span>
+            )}
           </button>
+
           <button
             onClick={() => onViewModeChange('exams')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
               viewMode === 'exams'
-                ? 'bg-white text-slate-900 shadow-xs font-semibold'
+                ? 'bg-white text-slate-900 shadow-xs'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Midsem exams (week 8)
+            <GraduationCap className="w-3.5 h-3.5 text-amber-700" />
+            <span>Midsem exams (Week 8)</span>
           </button>
         </div>
 
-        {/* Filter Controls */}
+        {/* Filter Dropdown */}
         {viewMode !== 'exams' && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="inline-flex items-center gap-1 text-slate-500 font-medium">
@@ -378,24 +388,24 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                 onFilterTypeChange(e.target.value as any);
                 onFilterValueChange('');
               }}
-              className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium focus:outline-hidden focus:border-blue-600"
+              className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium"
             >
-              <option value="all">All sessions &amp; events</option>
+              <option value="all">All classes</option>
               <option value="group">Student group</option>
-              <option value="faculty">Faculty member</option>
-              <option value="room">Room / venue</option>
+              <option value="faculty">Faculty</option>
+              <option value="room">Room / Venue</option>
             </select>
 
             {filterType === 'group' && (
               <select
                 value={filterValue}
                 onChange={(e) => onFilterValueChange(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium max-w-xs truncate"
+                className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium max-w-xs"
               >
-                <option value="">Select student group</option>
+                <option value="">Select group</option>
                 {groups.map((g) => (
                   <option key={g.id} value={g.id}>
-                    {g.id} — {g.name} ({g.size} students)
+                    {g.id} ({g.size} students)
                   </option>
                 ))}
               </select>
@@ -405,12 +415,12 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
               <select
                 value={filterValue}
                 onChange={(e) => onFilterValueChange(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium max-w-xs truncate"
+                className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium max-w-xs"
               >
-                <option value="">Select faculty member</option>
+                <option value="">Select faculty</option>
                 {faculty.map((f) => (
                   <option key={f.id} value={f.id}>
-                    {f.id} — {f.name} ({f.department})
+                    {f.id} — {f.name}
                   </option>
                 ))}
               </select>
@@ -420,12 +430,12 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
               <select
                 value={filterValue}
                 onChange={(e) => onFilterValueChange(e.target.value)}
-                className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium max-w-xs truncate"
+                className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1 text-slate-700 font-medium max-w-xs"
               >
                 <option value="">Select room</option>
                 {rooms.map((r) => (
                   <option key={r.id} value={r.id}>
-                    {r.id} — {r.name} ({r.capacity} cap, {r.type})
+                    {r.id} (cap {r.capacity})
                   </option>
                 ))}
               </select>
@@ -440,28 +450,62 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                 className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 text-xs ml-1 bg-slate-100 px-2 py-1 rounded"
               >
                 <X className="w-3 h-3" />
-                <span>Clear</span>
+                <span>Reset filter</span>
               </button>
             )}
           </div>
         )}
       </div>
 
+      {/* 2. Operational Metrics & Utilization Strip */}
+      <div className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex flex-wrap items-center gap-5 text-slate-700">
+          <div className="flex items-center gap-1.5">
+            <Percent className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+            <span>
+              {selectedRoomUtil !== null ? `${filterValue} Utilization: ` : 'Room Utilization: '}
+              <strong className="text-slate-900 font-bold">
+                {selectedRoomUtil !== null ? `${selectedRoomUtil}%` : `${campusUtilization}%`}
+              </strong>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+            <span>Pending Approvals: <strong className="text-slate-900 font-bold">{pendingCount}</strong></span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {totalConflictsCount === 0 ? (
+              <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>0 Conflicts (Verified)</span>
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-red-700 font-bold animate-pulse">
+                <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                <span>{totalConflictsCount} Conflicts Detected</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 text-slate-500 text-[11px]">
+          <Coffee className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <span>Lunch Break: <strong className="text-slate-700 font-semibold">13:00–14:00</strong> (Between P5 &amp; P6)</span>
+        </div>
+      </div>
+
       {/* 3. Main Timetable / Exam Display */}
       {viewMode === 'exams' ? (
         /* Midsem Exam Table View */
         <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs">
-          <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <div className="font-semibold text-slate-800 text-sm">
-                Midsem Examination Timetable (Week 8: 22 Feb – 27 Feb 2027)
-              </div>
-              <div className="text-xs text-slate-500">
-                AM Session: 09:30–11:30 • PM Session: 14:00–16:00 • Halved capacity enforced (0 clashes)
-              </div>
-            </div>
-            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded text-xs font-semibold">
-              41 exams scheduled • 0 hard violations
+          <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <span className="font-bold text-slate-800 text-xs">
+              Mid-Semester Examinations (Week 8: 22 Feb – 27 Feb 2027)
+            </span>
+            <span className="text-[11px] text-slate-500">
+              AM: 09:30–11:30 • PM: 14:00–16:00
             </span>
           </div>
 
@@ -469,12 +513,12 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="p-3">Exam ID</th>
-                  <th className="p-3">Course(s)</th>
-                  <th className="p-3">Assigned Day &amp; Date</th>
-                  <th className="p-3">Session</th>
-                  <th className="p-3">Allocated Rooms</th>
-                  <th className="p-3">Eligible Groups</th>
+                  <th className="p-2.5">Exam Code</th>
+                  <th className="p-2.5">Course(s)</th>
+                  <th className="p-2.5">Day</th>
+                  <th className="p-2.5">Slot</th>
+                  <th className="p-2.5">Rooms</th>
+                  <th className="p-2.5">Student Groups</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -483,31 +527,30 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                   const meta = examMetaMap.get(ex.exam_id);
                   return (
                     <tr key={ex.exam_id} className="hover:bg-slate-50/60">
-                      <td className="p-3 font-mono font-semibold text-slate-900">{ex.exam_id}</td>
-                      <td className="p-3 font-medium text-slate-800">
+                      <td className="p-2.5 font-mono font-bold text-slate-900">{ex.exam_id}</td>
+                      <td className="p-2.5 font-semibold text-slate-800">
                         {meta?.course_ids ? meta.course_ids.join(', ') : ex.exam_id.replace('EX-', '')}
                       </td>
-                      <td className="p-3">
-                        <span className="font-semibold text-slate-900">{ex.day}</span>{' '}
-                        <span className="text-slate-500 text-[11px]">({dayMeta?.date || 'Feb 2027'})</span>
+                      <td className="p-2.5 font-medium text-slate-800">
+                        {dayMeta?.label || ex.day} <span className="text-slate-400 font-normal">({dayMeta?.date || ''})</span>
                       </td>
-                      <td className="p-3">
+                      <td className="p-2.5">
                         <span className={`px-2 py-0.5 rounded font-mono text-[11px] font-semibold ${
                           ex.session === 'AM' ? 'bg-blue-100 text-blue-900' : 'bg-purple-100 text-purple-900'
                         }`}>
-                          {ex.session} ({ex.session === 'AM' ? '09:30–11:30' : '14:00–16:00'})
+                          {ex.session === 'AM' ? 'AM (09:30–11:30)' : 'PM (14:00–16:00)'}
                         </span>
                       </td>
-                      <td className="p-3">
+                      <td className="p-2.5">
                         <div className="flex flex-wrap gap-1">
                           {ex.rooms.map((rid: string) => (
-                            <span key={rid} className="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 font-mono text-[11px] text-slate-800">
+                            <span key={rid} className="px-1.5 py-0.2 rounded bg-slate-100 border border-slate-200 font-mono text-[11px] text-slate-800">
                               {rid}
                             </span>
                           ))}
                         </div>
                       </td>
-                      <td className="p-3 text-slate-600">
+                      <td className="p-2.5 text-slate-600">
                         {meta?.groups ? meta.groups.join(', ') : 'All registered groups'}
                       </td>
                     </tr>
@@ -518,25 +561,24 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
           </div>
         </div>
       ) : (
-        /* Regular & Week 7 Time Grid */
+        /* Regular & Week 7 Weekly Time Grid */
         <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-xs">
           {viewMode === 'fest_week' && (
             <div className="bg-purple-50/80 border-b border-purple-200 px-4 py-2 flex items-center justify-between text-xs text-purple-900">
               <div className="flex items-center gap-2">
                 <PartyPopper className="w-4 h-4 text-purple-700" />
-                <span className="font-bold">Week 7 Festival Overlay Active:</span>
-                <span>Daytime instruction (P1–P9) + Evening cultural events (P10–P13 · 18:00–22:00)</span>
+                <span className="font-bold">Week 7 Festival Overlay (15 Feb – 19 Feb 2027):</span>
+                <span>Daytime classes + Evening festival venues (P10–P13 · 18:00–22:00)</span>
               </div>
-              <span className="text-[11px] text-purple-700 font-medium">15 Feb – 19 Feb 2027</span>
             </div>
           )}
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-xs min-w-[1000px]">
+            <table className="w-full border-collapse text-left text-xs min-w-[950px]">
               <thead>
                 <tr className="bg-slate-100 text-slate-700 border-b border-slate-200">
-                  <th className="w-28 p-2.5 text-center font-bold text-slate-800 border-r border-slate-200">
-                    Day &amp; Date
+                  <th className="w-24 p-2.5 text-center font-bold text-slate-800 border-r border-slate-200">
+                    Day
                   </th>
                   {PERIODS.slice(0, numPeriods).map((p) => {
                     const isLunchBoundary = p.p === 5;
@@ -545,13 +587,13 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                       <th
                         key={p.p}
                         className={`p-2 text-center border-r border-slate-200 font-medium ${
-                          isLunchBoundary ? 'border-r-2 border-r-slate-400 bg-slate-150' : ''
+                          isLunchBoundary ? 'border-r-4 border-r-amber-400 bg-amber-50/30' : ''
                         } ${isEventPeriod ? 'bg-purple-100/60 text-purple-950' : ''}`}
                       >
-                        <div className="font-semibold text-slate-900 flex items-center justify-center gap-1">
-                          <span>{p.label}</span>
+                        <div className="font-bold text-slate-900">
+                          {p.label}
                           {isEventPeriod && (
-                            <span className="text-[9px] px-1 rounded bg-purple-200 text-purple-800 font-bold uppercase">
+                            <span className="ml-1 text-[9px] px-1 rounded bg-purple-200 text-purple-800 font-bold uppercase">
                               Fest
                             </span>
                           )}
@@ -563,27 +605,14 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
-                {currentDays.map((dayItem) => {
+                {WEEK_DAYS.map((dayItem) => {
                   const dayCode = dayItem.code;
                   return (
                     <tr key={dayCode} className="hover:bg-slate-50/40">
-                      {/* Day Header Column with integrated date */}
-                      <td className="p-2.5 text-center font-bold text-slate-800 bg-slate-50 border-r border-slate-200 align-top">
-                        <div className="text-sm font-bold text-slate-900">{dayCode}</div>
-                        {viewMode === 'fest_week' ? (
-                          <div className="text-[11px] font-semibold text-purple-700 mt-0.5">
-                            {(dayItem as any).date}
-                          </div>
-                        ) : (
-                          <div className="text-[10px] text-slate-500 font-normal mt-0.5">
-                            {(dayItem as any).termDates}
-                          </div>
-                        )}
-                        {viewMode === 'fest_week' && (dayItem as any).festTheme && (
-                          <div className="text-[9px] text-slate-500 font-normal mt-1 leading-tight line-clamp-2">
-                            {(dayItem as any).festTheme}
-                          </div>
-                        )}
+                      {/* Clean Day Header */}
+                      <td className="p-2.5 text-center font-bold text-slate-900 bg-slate-50 border-r border-slate-200 align-top">
+                        <div className="text-xs font-bold uppercase">{dayCode}</div>
+                        <div className="text-[10px] text-slate-500 font-normal mt-0.5">{dayItem.label}</div>
                       </td>
 
                       {/* Periods */}
@@ -591,30 +620,72 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                         const key = `${dayCode}-${p.p}`;
                         const academicItems = gridMap.get(key) || [];
                         const festItems = festGridMap.get(key) || [];
+                        const allSlotSessions = rawSlotMap.get(key) || [];
                         const isLunchBoundary = p.p === 5;
                         const isEventPeriod = p.p > 9;
+
+                        // Check for clash/overlap in this cell:
+                        // 1. Room overlap: duplicate rooms in this slot
+                        const roomCounts = new Map<string, number>();
+                        for (const s of allSlotSessions) {
+                          roomCounts.set(s.room_id, (roomCounts.get(s.room_id) || 0) + 1);
+                        }
+                        const roomClash = Array.from(roomCounts.entries()).find(([_, count]) => count > 1);
+
+                        // 2. Faculty overlap
+                        const facCounts = new Map<string, number>();
+                        for (const s of allSlotSessions) {
+                          const m = metaMap.get(s.session_id);
+                          if (m?.faculty_id) {
+                            facCounts.set(m.faculty_id, (facCounts.get(m.faculty_id) || 0) + 1);
+                          }
+                        }
+                        const facClash = Array.from(facCounts.entries()).find(([_, count]) => count > 1);
+
+                        // 3. Validator error on session
+                        const cellErrors = academicItems.filter(i => !!i.errorNote);
+
+                        const hasClash = !!roomClash || !!facClash || cellErrors.length > 0;
 
                         return (
                           <td
                             key={p.p}
-                            className={`p-1.5 align-top border-r border-slate-200 min-h-[96px] min-w-[96px] ${
-                              isLunchBoundary ? 'border-r-2 border-r-slate-400' : ''
+                            className={`p-1.5 align-top border-r border-slate-200 min-h-[90px] min-w-[90px] ${
+                              isLunchBoundary ? 'border-r-4 border-r-amber-400' : ''
                             } ${isEventPeriod ? 'bg-purple-50/30' : ''}`}
                           >
                             <div className="space-y-1.5">
-                              {/* 1. Academic Course Sessions */}
-                              {academicItems.map(({ scheduled, meta, diffChange, override }) => {
+                              {/* RED COLORED CLASH / ERROR CARD */}
+                              {hasClash && (
+                                <div className="p-1.5 rounded bg-red-50 border-2 border-red-500 text-red-950 shadow-xs mb-1 animate-pulse">
+                                  <div className="flex items-center gap-1 text-[11px] font-bold text-red-700">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-red-600 shrink-0" />
+                                    <span>Conflict Detected</span>
+                                  </div>
+                                  <div className="text-[10px] text-red-900 font-medium mt-0.5 leading-tight">
+                                    {roomClash && `Room double-booked: ${roomClash[0]}`}
+                                    {facClash && `Faculty double-booked: ${facClash[0]}`}
+                                    {cellErrors.length > 0 && cellErrors[0].errorNote}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Academic Classes */}
+                              {academicItems.map(({ scheduled, meta, diffChange, override, errorNote }) => {
                                 const isLab = meta.kind === 'lab';
                                 const isBasket = !!meta.basket_slot;
                                 const isChanged = !!diffChange;
                                 const isOverridden = !!override;
+                                const isError = !!errorNote;
 
                                 return (
                                   <div
                                     key={scheduled.session_id}
                                     onClick={() => setSelectedSession({ scheduled, meta, diffChange, override })}
                                     className={`p-1.5 rounded cursor-pointer transition-all border text-[11px] shadow-2xs relative ${
-                                      isChanged
+                                      isError
+                                        ? 'bg-red-50 border-red-500 text-red-950 ring-1 ring-red-500 hover:bg-red-100'
+                                        : isChanged
                                         ? 'bg-emerald-50/90 border-emerald-400 text-emerald-950 ring-1 ring-emerald-400 hover:bg-emerald-100'
                                         : isOverridden
                                         ? 'bg-rose-50/90 border-rose-300 text-rose-950 ring-1 ring-rose-300 hover:bg-rose-100'
@@ -624,25 +695,25 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                                         ? 'bg-indigo-50/80 border-indigo-300 text-indigo-950 hover:bg-indigo-100'
                                         : 'bg-white border-slate-300 text-slate-900 hover:border-slate-400'
                                     }`}
-                                    title={`Click to inspect or reschedule ${meta.id}`}
+                                    title={`Click to inspect or change ${meta.id}`}
                                   >
-                                    {/* Change notification badge */}
+                                    {/* Updated slot pill */}
                                     {isChanged && (
-                                      <span className="absolute -top-1.5 -right-1.5 px-1 py-0.2 bg-emerald-600 text-white rounded text-[9px] font-bold shadow-xs">
+                                      <span className="absolute -top-1.5 -right-1 px-1 py-0.2 bg-emerald-700 text-white rounded text-[8px] font-bold">
                                         Updated
                                       </span>
                                     )}
 
-                                    {/* Week 7 override badge */}
+                                    {/* Week 7 override pill */}
                                     {isOverridden && (
-                                      <span className="absolute -top-1.5 -right-1.5 px-1 py-0.2 bg-rose-600 text-white rounded text-[9px] font-bold shadow-xs">
-                                        Override
+                                      <span className="absolute -top-1.5 -right-1 px-1 py-0.2 bg-rose-700 text-white rounded text-[8px] font-bold">
+                                        Overridden
                                       </span>
                                     )}
 
                                     <div className="flex items-center justify-between font-bold leading-tight">
                                       <span>{meta.course_id}</span>
-                                      <span className="text-[10px] px-1 py-0.2 rounded bg-slate-100 font-mono text-slate-700">
+                                      <span className="text-[10px] px-1 py-0.2 rounded bg-slate-100 font-mono text-slate-700 font-semibold">
                                         {scheduled.room_id}
                                       </span>
                                     </div>
@@ -657,12 +728,6 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                                       </div>
                                     )}
 
-                                    {isOverridden && (
-                                      <div className="text-[9px] text-rose-800 font-medium truncate mt-0.5">
-                                        Moved for {override.displaced_by}
-                                      </div>
-                                    )}
-
                                     <div className="flex items-center gap-1 mt-0.5">
                                       {isBasket && (
                                         <span className="px-1 rounded bg-indigo-100 text-indigo-800 text-[9px] font-medium">
@@ -671,7 +736,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                                       )}
                                       {isLab && (
                                         <span className="px-1 rounded bg-amber-100 text-amber-900 text-[9px] font-medium">
-                                          lab (3h)
+                                          Lab · 3h
                                         </span>
                                       )}
                                     </div>
@@ -679,13 +744,13 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                                 );
                               })}
 
-                              {/* 2. Approved Week 7 Fest Events */}
+                              {/* Approved Week 7 Fest Events */}
                               {viewMode === 'fest_week' && festItems.map(({ decision, bookingMeta }, idx) => (
                                 <div
                                   key={`${decision.request_id}-${idx}`}
                                   onClick={() => setSelectedEvent({ bookingMeta, decision })}
-                                  className="p-1.5 rounded cursor-pointer transition-all border border-purple-400 bg-purple-100/90 hover:bg-purple-200 text-purple-950 text-[11px] shadow-xs relative"
-                                  title={`Click to view approved fest booking ${decision.request_id}`}
+                                  className="p-1.5 rounded cursor-pointer transition-all border border-purple-400 bg-purple-100/90 hover:bg-purple-200 text-purple-950 text-[11px] shadow-xs"
+                                  title={`View fest event ${decision.request_id}`}
                                 >
                                   <div className="flex items-center justify-between font-bold leading-tight">
                                     <span className="truncate max-w-[80px]">
@@ -704,9 +769,6 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                                     <span className="px-1 py-0.2 rounded bg-purple-300/80 text-purple-900 text-[9px] font-bold uppercase">
                                       {bookingMeta?.requested_category || 'Fest'}
                                     </span>
-                                    <span className="text-[9px] text-purple-700 font-mono">
-                                      {decision.start_period === decision.end_period ? `P${decision.start_period}` : `P${decision.start_period}–P${decision.end_period}`}
-                                    </span>
                                   </div>
                                 </div>
                               ))}
@@ -723,7 +785,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
         </div>
       )}
 
-      {/* 4. Session Details & Dynamic Faculty Rescheduling Assistant Modal */}
+      {/* 3. Session Inspector & Faculty Rescheduling Assistant Modal */}
       {selectedSession && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg border border-slate-300 max-w-lg w-full p-5 space-y-4 shadow-2xl text-slate-900">
@@ -748,10 +810,10 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
               </button>
             </div>
 
-            {/* Change History Pill if Modified */}
+            {/* Changed Slot Notice */}
             {selectedSession.diffChange && (
               <div className="p-2.5 rounded bg-emerald-50 border border-emerald-300 text-xs text-emerald-900">
-                <span className="font-bold">Approved Change Applied:</span> This session was moved from{' '}
+                <span className="font-bold">Updated Slot:</span> Moved from{' '}
                 <span className="font-semibold">{selectedSession.diffChange.before.day} Period {selectedSession.diffChange.before.start_period} ({selectedSession.diffChange.before.room_id})</span>{' '}
                 to <span className="font-semibold">{selectedSession.scheduled.day} Period {selectedSession.scheduled.start_period} ({selectedSession.scheduled.room_id})</span>.
               </div>
@@ -759,22 +821,18 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
 
             {/* Current Metadata */}
             <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded border border-slate-200">
-              <div><span className="text-slate-500 font-medium">Assigned slot:</span> <span className="font-semibold">{selectedSession.scheduled.day} Period {selectedSession.scheduled.start_period}</span></div>
+              <div><span className="text-slate-500 font-medium">Assigned Slot:</span> <span className="font-semibold">{selectedSession.scheduled.day} Period {selectedSession.scheduled.start_period}</span></div>
               <div><span className="text-slate-500 font-medium">Room:</span> <span className="font-semibold">{selectedSession.scheduled.room_id}</span></div>
               <div><span className="text-slate-500 font-medium">Faculty:</span> <span className="font-semibold">{selectedSession.meta.faculty_id}</span></div>
-              <div><span className="text-slate-500 font-medium">Students:</span> <span className="font-semibold">{selectedSession.meta.size} students</span></div>
+              <div><span className="text-slate-500 font-medium">Students:</span> <span className="font-semibold">{selectedSession.meta.size}</span></div>
               <div className="col-span-2"><span className="text-slate-500 font-medium">Groups:</span> <span className="font-semibold">{selectedSession.meta.groups.join(', ')}</span></div>
             </div>
 
-            {/* Dynamic Rescheduling Assistant */}
+            {/* Rescheduling Assistant */}
             <div className="border-t border-slate-200 pt-3 space-y-2.5">
-              <div className="text-xs font-semibold text-slate-800 flex items-center justify-between">
-                <span>Faculty Schedule Change Assistant (CP-SAT Solver Checked)</span>
-                <span className="text-[11px] text-slate-400">Strict Hard Constraint Guard</span>
+              <div className="text-xs font-semibold text-slate-800">
+                Reschedule this session to another slot
               </div>
-              <p className="text-xs text-slate-500">
-                Select target day and period to evaluate and dynamically commit session moves.
-              </p>
 
               {moveSuccess && (
                 <div className="p-2.5 rounded bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-medium">
@@ -788,8 +846,8 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                   onChange={(e) => setTargetDay(e.target.value)}
                   className="bg-slate-50 border border-slate-300 rounded px-2.5 py-1.5 text-slate-700 font-medium"
                 >
-                  {TEACHING_DAYS.map((d) => (
-                    <option key={d.code} value={d.code}>{d.label} ({d.code})</option>
+                  {WEEK_DAYS.map((d) => (
+                    <option key={d.code} value={d.code}>{d.label}</option>
                   ))}
                 </select>
 
@@ -808,7 +866,7 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                   disabled={changeChecking}
                   className="bg-blue-700 hover:bg-blue-800 text-white px-3.5 py-1.5 rounded font-medium text-xs transition-colors disabled:opacity-50"
                 >
-                  {changeChecking ? 'Evaluating...' : 'Check Feasibility'}
+                  {changeChecking ? 'Checking...' : 'Check Slot'}
                 </button>
               </div>
 
@@ -822,15 +880,15 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                     {changeResult.feasible ? (
                       <Check className="w-4 h-4 text-emerald-700" />
                     ) : (
-                      <AlertCircle className="w-4 h-4 text-rose-700" />
+                      <AlertTriangle className="w-4 h-4 text-rose-700" />
                     )}
                     <span>{changeResult.message}</span>
                   </div>
 
                   {changeResult.feasible && changeResult.available_rooms?.length > 0 && (
-                    <div className="pt-2 border-t border-emerald-200/80 flex items-center justify-between gap-3">
+                    <div className="pt-2 border-t border-emerald-200 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-emerald-900">Choose Room:</span>
+                        <span className="font-medium text-emerald-900">Room:</span>
                         <select
                           value={selectedMoveRoom}
                           onChange={(e) => setSelectedMoveRoom(e.target.value)}
@@ -845,9 +903,9 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                       <button
                         onClick={handleConfirmMove}
                         disabled={isApplyingMove}
-                        className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded font-bold text-xs shadow-xs transition-colors disabled:opacity-50"
+                        className="bg-emerald-700 hover:bg-emerald-800 text-white px-3.5 py-1.5 rounded font-bold text-xs transition-colors disabled:opacity-50"
                       >
-                        {isApplyingMove ? 'Committing...' : 'Apply & Move Session →'}
+                        {isApplyingMove ? 'Moving...' : 'Apply Move →'}
                       </button>
                     </div>
                   )}
@@ -858,15 +916,15 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
         </div>
       )}
 
-      {/* 5. Approved Fest Week Event Details Modal */}
+      {/* 4. Fest Event Modal */}
       {selectedEvent && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg border border-slate-300 max-w-md w-full p-5 space-y-3.5 shadow-2xl text-slate-900">
+          <div className="bg-white rounded-lg border border-slate-300 max-w-md w-full p-5 space-y-3 shadow-2xl text-slate-900">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
               <div className="flex items-center gap-2">
                 <PartyPopper className="w-4 h-4 text-purple-700" />
                 <h3 className="text-sm font-bold text-slate-900">
-                  Approved Spectra Week 7 Event
+                  Approved Fest Event (Week 7)
                 </h3>
               </div>
               <button
@@ -882,16 +940,15 @@ export const TimetableGridView: React.FC<TimetableGridViewProps> = ({
                 {selectedEvent.bookingMeta?.title || selectedEvent.decision.request_id}
               </div>
               <div className="text-xs text-purple-800 font-medium">
-                Organized by: <span className="font-semibold">{selectedEvent.bookingMeta?.requester || 'Society'}</span>
+                Organized by: <span className="font-semibold">{selectedEvent.bookingMeta?.requester || 'Club'}</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-3 rounded border border-slate-200">
-              <div><span className="text-slate-500 font-medium">Assigned Slot:</span> <span className="font-semibold">{selectedEvent.decision.day} Period {selectedEvent.decision.start_period}–{selectedEvent.decision.end_period || selectedEvent.decision.start_period}</span></div>
+              <div><span className="text-slate-500 font-medium">Slot:</span> <span className="font-semibold">{selectedEvent.decision.day} Period {selectedEvent.decision.start_period}–{selectedEvent.decision.end_period || selectedEvent.decision.start_period}</span></div>
               <div><span className="text-slate-500 font-medium">Venue:</span> <span className="font-semibold">{selectedEvent.decision.room_id}</span></div>
               <div><span className="text-slate-500 font-medium">Category:</span> <span className="font-semibold uppercase">{selectedEvent.bookingMeta?.requested_category || 'Club Event'}</span></div>
-              <div><span className="text-slate-500 font-medium">Attendance:</span> <span className="font-semibold">{selectedEvent.bookingMeta?.attendance || 100} attendees</span></div>
-              <div className="col-span-2"><span className="text-slate-500 font-medium">Decision Note:</span> <span className="font-semibold">{selectedEvent.decision.reason}</span></div>
+              <div><span className="text-slate-500 font-medium">Attendance:</span> <span className="font-semibold">{selectedEvent.bookingMeta?.attendance || 100}</span></div>
             </div>
 
             <div className="flex justify-end pt-2">

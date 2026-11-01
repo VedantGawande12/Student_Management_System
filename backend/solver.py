@@ -518,6 +518,54 @@ def solve_bookings(data, base_timetable):
     return {"bookings": decisions, "session_overrides": overrides}
 
 
+class InfeasibleScheduleError(Exception):
+    def __init__(self, message: str, conflicts: list = None):
+        super().__init__(message)
+        self.conflicts = conflicts or []
+
+def diagnose_infeasibility(working_data, disruption=None):
+    ctx = validator.Ctx(working_data)
+    days = working_data['calendar']['days']
+    conflicts = []
+    for f in working_data.get('faculty', []):
+        fid = f['id']
+        fac_sessions = [s for s in working_data.get('sessions', []) if s['faculty_id'] == fid]
+        total_hours = sum(s['duration'] for s in fac_sessions)
+        if total_hours == 0:
+            continue
+        avail_periods_total = 0
+        avail_by_day = {}
+        for day in days:
+            cnt = sum(1 for p in range(1, 10) if p != ctx.lunch and (day, p) not in ctx.fac_un[fid])
+            avail_by_day[day] = cnt
+            avail_periods_total += cnt
+        max_possible_hours = sum(min(4, cnt) for cnt in avail_by_day.values())
+        if total_hours > avail_periods_total:
+            conflicts.append(f"Faculty {fid} ({f.get('name', '')}) requires {total_hours} teaching hours, but only {avail_periods_total} valid periods are available due to unavailability restrictions.")
+        elif total_hours > max_possible_hours:
+            conflicts.append(f"Faculty {fid} ({f.get('name', '')}) requires {total_hours} teaching hours, but daily limit of 4 hours/day (H12) allows at most {max_possible_hours} hours given their availability pattern across {days}.")
+    for s in working_data.get('sessions', []):
+        fixed = s.get('fixed_slot')
+        if fixed:
+            f_day = fixed['day']
+            f_start = fixed['start_period']
+            dur = s['duration']
+            fid = s['faculty_id']
+            if any((f_day, p) in ctx.fac_un[fid] for p in range(f_start, f_start + dur)):
+                conflicts.append(f"Fixed session {s['id']} on {f_day} P{f_start} conflicts with Faculty {fid} unavailability (H7/H14).")
+    if disruption:
+        for ch in disruption.get('changes', []):
+            if ch.get('type') == 'faculty_unavailable':
+                fid = ch.get('faculty_id')
+                fac_name = next((f.get('name', '') for f in working_data.get('faculty', []) if f['id'] == fid), fid)
+                conflicts.append(f"Disruption marks Faculty {fid} ({fac_name}) unavailable on {ch.get('days')} for periods {ch.get('periods')}.")
+            elif ch.get('type') == 'room_unavailable':
+                rid = ch.get('room_id')
+                conflicts.append(f"Disruption closes Room {rid} on {ch.get('days')} for periods {ch.get('periods')}.")
+    if not conflicts:
+        conflicts.append("The combined set of room capacities, faculty availability, and student group non-overlap constraints has no feasible solution.")
+    return conflicts
+
 def solve_all(data, baseline=None, disruption=None, timeout_sec=30):
     """
     Solves all 4 stages and returns the full schedule dictionary.
@@ -529,7 +577,11 @@ def solve_all(data, baseline=None, disruption=None, timeout_sec=30):
     print("Stage 1: Solving Timetable...")
     sessions = solve_timetable(working_data, baseline=baseline, timeout_sec=timeout_sec)
     if not sessions:
-        raise RuntimeError("Failed to solve timetable!")
+        conflicts = diagnose_infeasibility(working_data, disruption=disruption)
+        raise InfeasibleScheduleError(
+            f"Failed to generate feasible schedule. {len(conflicts)} conflict(s) detected.",
+            conflicts=conflicts
+        )
         
     print("Stage 2: Solving Exams...")
     exams = solve_exams(working_data, timeout_sec=timeout_sec)

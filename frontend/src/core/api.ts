@@ -9,7 +9,7 @@ import {
   DatabaseStatus
 } from './types';
 
-const API_BASE = '/api';
+export const API_BASE = (import.meta.env?.VITE_API_BASE_URL || '/api').replace(/\/+$/, '');
 const TOKEN_KEY = 'cit_auth_token';
 
 let _memoryToken: string | null = null;
