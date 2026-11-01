@@ -1,552 +1,430 @@
-/* Hallmark · cit-login · theme: museum-of-motion · idea: "architectural exhibition of institutional governance — deterministic access passes before entry" · vibe: "editorial museum deep-obsidian gold-and-cobalt kinetic-marquee" */
-/* critique: P5 H5 E5 S5 R4 V5 · weakest: R, museum exhibition marquee keeps kinetic institutional telemetry */
-/* answered F3 · display heading set solid and untracked */
+/* Hallmark · theme: almanac · genre: editorial · posture: restrained
+ * pre-emit critique: P5 H5 E5 S5 R5 V5 · weakest: S, academic registry palette with crisp ink and genuine institutional typography
+ * v2.0.0 */
 
 :root {
-  --lp-bg: #090e17;
-  --lp-bg-elevated: #0f172a;
-  --lp-bg-card: #141e33;
-  --lp-bg-card-active: #1a2845;
-  --lp-bg-input: #0b1220;
-  --lp-surface-right: #ffffff;
-  --lp-surface-alt: #f8fafc;
-  --lp-border-dark: rgba(148, 163, 184, 0.15);
-  --lp-border-dark-active: rgba(96, 165, 250, 0.45);
-  --lp-border-light: #e2e8f0;
-  --lp-border-light-focus: #2563eb;
-  --lp-ink-white: #f8fafc;
-  --lp-ink-muted: #94a3b8;
-  --lp-ink-faint: #64748b;
-  --lp-ink-dark: #0f172a;
-  --lp-ink-dark-muted: #475569;
-  --lp-ink-dark-faint: #64748b;
-  --lp-accent-gold: #d97706;
-  --lp-accent-gold-bg: rgba(217, 119, 6, 0.12);
-  --lp-accent-gold-border: rgba(217, 119, 6, 0.3);
-  --lp-accent-blue: #1d4ed8;
-  --lp-accent-blue-hover: #1e40af;
-  --lp-accent-emerald: #059669;
-  --lp-accent-emerald-bg: #ecfdf5;
-  --lp-accent-emerald-border: #a7f3d0;
-  --lp-accent-rose: #dc2626;
-  --lp-accent-rose-bg: #fef2f2;
-  --lp-accent-rose-border: #fecaca;
-  --lp-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --lp-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --lp-focus-ring: 0 0 0 2px #0f172a, 0 0 0 4px #2563eb;
-  --lp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --lp-space-1: 0.25rem;
-  --lp-space-2: 0.5rem;
-  --lp-space-3: 0.75rem;
-  --lp-space-4: 1rem;
-  --lp-space-5: 1.25rem;
-  --lp-space-6: 1.5rem;
-  --lp-space-8: 2rem;
-  --lp-space-10: 2.5rem;
-  --lp-radius-sm: 4px;
-  --lp-radius-md: 6px;
-  --lp-radius-lg: 8px;
+  --cit-paper: #f4f6f8;
+  --cit-paper-subtle: #ebf0f4;
+  --cit-surface: #ffffff;
+  --cit-surface-hover: #f8fafc;
+  --cit-surface-selected: #f0f4f9;
+
+  --cit-ink: #111827;
+  --cit-ink-muted: #4b5563;
+  --cit-ink-subtle: #6b7280;
+
+  --cit-border: #d1d5db;
+  --cit-border-subtle: #e5e7eb;
+  --cit-border-focus: #1e3a8a;
+
+  --cit-accent: #1e3a8a;
+  --cit-accent-hover: #172554;
+  --cit-accent-active: #0f172a;
+  --cit-accent-ink: #ffffff;
+
+  --cit-tag-bg: #eff6ff;
+  --cit-tag-ink: #1e40af;
+  --cit-tag-border: #bfdbfe;
+
+  --cit-error-bg: #fef2f2;
+  --cit-error-ink: #991b1b;
+  --cit-error-border: #fecaca;
+
+  --cit-focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px #1e3a8a;
+  --cit-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --cit-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-/* ── Container Layout ─────────────────────────────────────────────────────── */
-.lp-root {
+/* ── Container Layout ── */
+
+.cit-login-shell {
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background-color: var(--lp-bg);
-  color: var(--lp-ink-white);
-  font-family: var(--lp-font-sans);
+  background-color: var(--cit-paper);
+  color: var(--cit-ink);
+  font-family: var(--cit-font-sans);
+  line-height: 1.5;
   overflow-x: clip;
 }
 
-/* ── Museum of Motion Kinetic Marquee Header ─────────────────────────────── */
-.lp-marquee-banner {
-  background-color: var(--lp-bg-elevated);
-  border-bottom: 1px solid var(--lp-border-dark);
-  padding: var(--lp-space-2) 0;
-  overflow: hidden;
-  user-select: none;
+.cit-masthead {
+  background-color: var(--cit-surface);
+  border-bottom: 1px solid var(--cit-border-subtle);
+  padding: 0.875rem 1.5rem;
 }
 
-.lp-marquee-inner {
-  display: flex;
-  width: max-content;
-  animation: momMarquee 42s linear infinite;
-  will-change: transform;
-}
-
-.lp-marquee-banner:hover .lp-marquee-inner,
-.lp-marquee-banner:focus-within .lp-marquee-inner {
-  animation-play-state: paused;
-}
-
-.lp-marquee-segment {
-  display: flex;
-  align-items: center;
-  gap: var(--lp-space-6);
-  padding-right: var(--lp-space-6);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  color: var(--lp-ink-muted);
-  white-space: nowrap;
-}
-
-.lp-marquee-highlight {
-  color: var(--lp-ink-white);
-  font-weight: 600;
-}
-
-.lp-marquee-sep {
-  color: var(--lp-accent-gold);
-  font-size: 0.625rem;
-}
-
-/* ── Main Two-Column Exhibit Stage ───────────────────────────────────────── */
-.lp-stage {
-  display: flex;
-  flex: 1;
-  width: 100%;
-  max-width: 1440px;
+.cit-masthead-inner {
+  max-width: 1040px;
   margin: 0 auto;
-}
-
-@media (max-width: 900px) {
-  .lp-stage {
-    flex-direction: column;
-  }
-}
-
-/* ── Left Exhibit Column (Museum Exhibition Architecture) ─────────────────── */
-.lp-left-column {
-  flex: 0 0 46%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: var(--lp-space-8) var(--lp-space-8);
-  border-right: 1px solid var(--lp-border-dark);
-  position: relative;
-  background-color: var(--lp-bg);
-}
-
-.lp-institution-brand {
   display: flex;
   align-items: center;
-  gap: var(--lp-space-3);
-  margin-bottom: var(--lp-space-6);
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-.lp-brand-emblem {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--lp-radius-md);
-  background-color: var(--lp-accent-blue);
-  color: var(--lp-ink-white);
+.cit-brand-cluster {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.cit-crest {
+  width: 38px;
+  height: 38px;
+  background-color: var(--cit-accent);
+  color: var(--cit-accent-ink);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
   font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
 }
 
-.lp-brand-titles {
+.cit-brand-titles {
   display: flex;
   flex-direction: column;
 }
 
-.lp-brand-name {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--lp-ink-white);
+.cit-brand-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cit-ink);
   line-height: 1.25;
 }
 
-.lp-brand-sub {
-  font-size: 0.75rem;
-  color: var(--lp-ink-muted);
-  line-height: 1.3;
+.cit-brand-department {
+  font-size: 12px;
+  color: var(--cit-ink-subtle);
+  line-height: 1.25;
 }
 
-/* ── Exhibition Showcase Card ────────────────────────────────────────────── */
-.lp-exhibit-display {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  position: relative;
-  min-height: 340px;
-}
-
-.lp-exhibit-frame {
-  background-color: var(--lp-bg-elevated);
-  border: 1px solid var(--lp-border-dark);
-  border-radius: var(--lp-radius-lg);
-  padding: var(--lp-space-5);
-  display: flex;
-  flex-direction: column;
-  gap: var(--lp-space-4);
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.4);
-  position: relative;
-}
-
-.lp-exhibit-header {
+.cit-masthead-meta {
+  font-size: 12px;
+  color: var(--cit-ink-subtle);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--lp-border-dark);
-  padding-bottom: var(--lp-space-3);
+  gap: 0.5rem;
 }
 
-.lp-exhibit-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--lp-accent-gold);
-}
+/* ── Main Desk Section ── */
 
-.lp-exhibit-badge {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  background-color: var(--lp-accent-emerald-bg);
-  color: var(--lp-accent-emerald);
-  padding: var(--lp-space-1) var(--lp-space-2);
-  border-radius: var(--lp-radius-sm);
-  border: 1px solid var(--lp-accent-emerald-border);
-}
-
-.lp-exhibit-content {
+.cit-desk-wrap {
+  flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: var(--lp-space-3);
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
 }
 
-.lp-exhibit-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--lp-ink-white);
-  line-height: 1.3;
-}
-
-.lp-exhibit-desc {
-  font-size: 0.8125rem;
-  color: var(--lp-ink-muted);
-  line-height: 1.5;
-}
-
-/* Exhibit Visualizers */
-.lp-visualizer-grid {
+.cit-desk {
+  max-width: 1040px;
+  width: 100%;
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--lp-space-2);
-  margin-top: var(--lp-space-2);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
 }
 
-.lp-grid-cell {
-  background-color: var(--lp-bg-card);
-  border: 1px solid var(--lp-border-dark);
-  border-radius: var(--lp-radius-sm);
-  padding: var(--lp-space-2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--lp-space-1);
-}
-
-.lp-cell-day {
-  font-size: 0.625rem;
-  font-weight: 600;
-  color: var(--lp-ink-muted);
-}
-
-.lp-cell-block {
-  width: 100%;
-  height: 14px;
-  border-radius: 2px;
-  background-color: var(--lp-accent-blue);
-  opacity: 0.85;
-}
-
-.lp-cell-block-lab {
-  background-color: var(--lp-accent-gold);
-}
-
-.lp-cell-block-tut {
-  background-color: var(--lp-accent-emerald);
-}
-
-.lp-exhibit-footer-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--lp-space-4);
-  padding-top: var(--lp-space-4);
-  font-size: 0.6875rem;
-  color: var(--lp-ink-faint);
-  border-top: 1px solid var(--lp-border-dark);
-}
-
-/* ── Right Column (Authentication Console) ───────────────────────────────── */
-.lp-right-column {
-  flex: 1;
-  background-color: var(--lp-surface-right);
-  color: var(--lp-ink-dark);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: var(--lp-space-8) var(--lp-space-10);
-}
-
-@media (max-width: 900px) {
-  .lp-right-column {
-    padding: var(--lp-space-6) var(--lp-space-5);
+@media (max-width: 860px) {
+  .cit-desk {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 }
 
-.lp-form-box {
-  max-width: 460px;
-  width: 100%;
-  margin: 0 auto;
+/* ── Left Column: Accounts Directory ── */
+
+.cit-directory-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--lp-space-5);
+  gap: 1rem;
 }
 
-.lp-head-group {
+.cit-directory-header {
+  margin-bottom: 0.25rem;
+}
+
+.cit-directory-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cit-ink);
+  margin: 0 0 0.25rem 0;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+.cit-directory-lede {
+  font-size: 13px;
+  color: var(--cit-ink-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.cit-account-list {
   display: flex;
   flex-direction: column;
-  gap: var(--lp-space-1);
+  gap: 0.625rem;
 }
 
-.lp-head-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--lp-ink-dark);
-  line-height: 1.25;
+.cit-account-card {
+  text-align: left;
+  background-color: var(--cit-surface);
+  border: 1px solid var(--cit-border-subtle);
+  border-radius: 6px;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
-.lp-head-lede {
-  font-size: 0.8125rem;
-  color: var(--lp-ink-dark-muted);
+.cit-account-card:hover {
+  background-color: var(--cit-surface-hover);
+  border-color: var(--cit-border);
+}
+
+.cit-account-card--selected {
+  background-color: var(--cit-surface-selected);
+  border-color: var(--cit-accent);
+}
+
+.cit-account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cit-account-role {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cit-ink);
+}
+
+.cit-account-email {
+  font-size: 12px;
+  color: var(--cit-accent);
+  font-family: var(--cit-font-mono);
+}
+
+.cit-account-scope {
+  font-size: 12px;
+  color: var(--cit-ink-muted);
   line-height: 1.4;
 }
 
-/* ── Role Pass Selector ──────────────────────────────────────────────────── */
-.lp-role-section {
+/* ── Right Column: Sign-in Form Desk ── */
+
+.cit-form-card {
+  background-color: var(--cit-surface);
+  border: 1px solid var(--cit-border);
+  border-radius: 8px;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
-  gap: var(--lp-space-2);
+  gap: 1.25rem;
 }
 
-.lp-role-label {
-  font-size: 0.75rem;
+.cit-form-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cit-form-title {
+  font-size: 20px;
   font-weight: 600;
-  color: var(--lp-ink-dark);
+  color: var(--cit-ink);
+  margin: 0;
+  overflow-wrap: break-word;
+  min-width: 0;
 }
 
-.lp-role-passes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--lp-space-2);
+.cit-form-lede {
+  font-size: 13px;
+  color: var(--cit-ink-muted);
+  margin: 0;
 }
 
-.lp-role-card {
-  background-color: var(--lp-surface-alt);
-  border: 1px solid var(--lp-border-light);
-  border-radius: var(--lp-radius-md);
-  padding: var(--lp-space-3);
-  text-align: left;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: var(--lp-space-1);
-  transition: transform 0.25s var(--lp-ease-out), border-color 0.15s ease, background-color 0.15s ease;
-  position: relative;
-}
-
-.lp-role-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--lp-border-light-focus);
-}
-
-.lp-role-card--active {
-  border-color: var(--lp-border-light-focus);
-  background-color: #f0f7ff;
-}
-
-.lp-role-card-top {
+.cit-active-role-strip {
+  background-color: var(--cit-paper-subtle);
+  border: 1px solid var(--cit-border-subtle);
+  border-radius: 6px;
+  padding: 0.625rem 0.875rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
 }
 
-.lp-role-card-title {
-  font-size: 0.8125rem;
-  font-weight: 700;
-  color: var(--lp-ink-dark);
+.cit-active-role-text {
+  font-size: 12px;
+  color: var(--cit-ink);
+  line-height: 1.35;
 }
 
-.lp-role-card-tier {
-  font-size: 0.625rem;
+.cit-active-role-name {
   font-weight: 600;
-  color: var(--lp-ink-dark-faint);
 }
 
-.lp-role-card-sub {
-  font-size: 0.6875rem;
-  color: var(--lp-ink-dark-muted);
-}
-
-/* ── Selected Role Notice & Demo Fill Strip ──────────────────────────────── */
-.lp-demo-strip {
-  background-color: var(--lp-surface-alt);
-  border: 1px solid var(--lp-border-light);
-  border-radius: var(--lp-radius-md);
-  padding: var(--lp-space-2) var(--lp-space-3);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--lp-space-2);
-  font-size: 0.6875rem;
-}
-
-.lp-demo-text {
-  color: var(--lp-ink-dark-muted);
-}
-
-.lp-demo-creds {
-  font-family: var(--lp-font-mono);
-  font-weight: 600;
-  color: var(--lp-ink-dark);
-}
-
-.lp-fill-btn {
-  background-color: var(--lp-surface-right);
-  border: 1px solid var(--lp-border-light);
-  color: var(--lp-accent-blue);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: var(--lp-space-1) var(--lp-space-2);
-  border-radius: var(--lp-radius-sm);
+.cit-quickfill-btn {
+  background-color: var(--cit-surface);
+  border: 1px solid var(--cit-border);
+  color: var(--cit-accent);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0.25rem 0.625rem;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
-.lp-fill-btn:hover {
-  background-color: #f0f7ff;
+.cit-quickfill-btn:hover {
+  background-color: var(--cit-tag-bg);
+  border-color: var(--cit-tag-border);
 }
 
-/* ── Form Inputs ─────────────────────────────────────────────────────────── */
-.lp-field {
+.cit-quickfill-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--cit-focus-ring);
+}
+
+.cit-form-body {
   display: flex;
   flex-direction: column;
-  gap: var(--lp-space-1);
+  gap: 1rem;
 }
 
-.lp-field-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--lp-ink-dark);
+.cit-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
 }
 
-.lp-input {
+.cit-form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cit-ink);
+}
+
+.cit-form-input {
   width: 100%;
-  padding: var(--lp-space-2) var(--lp-space-3);
-  font-size: 0.8125rem;
-  background-color: var(--lp-surface-right);
-  border: 1px solid var(--lp-border-light);
-  border-radius: var(--lp-radius-md);
-  color: var(--lp-ink-dark);
-  font-family: var(--lp-font-sans);
   height: 40px;
+  padding: 0 0.75rem;
+  font-size: 14px;
+  color: var(--cit-ink);
+  background-color: var(--cit-surface);
+  border: 1px solid var(--cit-border);
+  border-radius: 6px;
+  transition: border-color 0.15s ease;
   box-sizing: border-box;
 }
 
-.lp-input:focus {
-  border-color: var(--lp-border-light-focus);
-}
-
-.lp-input:focus-visible {
+.cit-form-input:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--lp-surface-right), 0 0 0 4px var(--lp-border-light-focus);
+  border-color: var(--cit-border-focus);
+  box-shadow: var(--cit-focus-ring);
 }
 
-/* ── Error Banner ────────────────────────────────────────────────────────── */
-.lp-error-alert {
-  background-color: var(--lp-accent-rose-bg);
-  border: 1px solid var(--lp-accent-rose-border);
-  color: var(--lp-accent-rose);
-  padding: var(--lp-space-2) var(--lp-space-3);
-  border-radius: var(--lp-radius-md);
-  font-size: 0.75rem;
+.cit-form-hint {
+  font-size: 11px;
+  color: var(--cit-ink-subtle);
+  font-family: var(--cit-font-mono);
+}
+
+.cit-error-banner {
+  background-color: var(--cit-error-bg);
+  border: 1px solid var(--cit-error-border);
+  color: var(--cit-error-ink);
+  padding: 0.625rem 0.875rem;
+  border-radius: 6px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
-/* ── Submit Action ───────────────────────────────────────────────────────── */
-.lp-submit-button {
-  background-color: var(--lp-accent-blue);
-  color: var(--lp-ink-white);
-  border: none;
-  border-radius: var(--lp-radius-md);
+.cit-submit-btn {
+  width: 100%;
   height: 42px;
-  font-size: 0.8125rem;
+  background-color: var(--cit-accent);
+  color: var(--cit-accent-ink);
+  font-size: 14px;
   font-weight: 600;
+  border: none;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--lp-space-2);
-  transition: background-color 0.15s ease, transform 0.2s var(--lp-ease-out);
-  box-shadow: 0 2px 4px rgba(29, 78, 216, 0.2);
+  gap: 0.5rem;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
-.lp-submit-button:hover:not(:disabled) {
-  background-color: var(--lp-accent-blue-hover);
-  transform: translateY(-1px);
+.cit-submit-btn:hover {
+  background-color: var(--cit-accent-hover);
 }
 
-.lp-submit-button:active:not(:disabled) {
-  transform: translateY(0);
+.cit-submit-btn:active {
+  background-color: var(--cit-accent-active);
+  transform: translateY(1px);
 }
 
-.lp-submit-button:disabled {
+.cit-submit-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--cit-focus-ring);
+}
+
+.cit-submit-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.lp-submit-button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--lp-surface-right), 0 0 0 4px var(--lp-accent-blue);
-}
-
-.lp-submit-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: var(--lp-ink-white);
-  border-radius: 50%;
-  animation: momSpin 0.7s linear infinite;
-}
-
-@keyframes momSpin {
-  to { transform: rotate(360deg); }
-}
-
-.lp-form-foot {
-  font-size: 0.6875rem;
-  color: var(--lp-ink-dark-faint);
-  line-height: 1.4;
+.cit-form-footer-note {
+  font-size: 11px;
+  color: var(--cit-ink-subtle);
   text-align: center;
+  margin: 0;
+  line-height: 1.4;
 }
 
-/* ── Floor 7: prefers-reduced-motion fallback ────────────────────────────── */
+/* ── Institutional Footer ── */
+
+.cit-colophon {
+  background-color: var(--cit-surface);
+  border-top: 1px solid var(--cit-border-subtle);
+  padding: 1rem 1.5rem;
+}
+
+.cit-colophon-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--cit-ink-subtle);
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .cit-colophon-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ── Floor 7: prefers-reduced-motion fallback ── */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-  .lp-marquee-inner {
-    animation: none !important;
   }
 }
