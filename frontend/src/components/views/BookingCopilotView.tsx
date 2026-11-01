@@ -110,8 +110,91 @@ export const BookingCopilotView: React.FC<BookingCopilotViewProps> = ({
 
       {/* Structured Editable Booking Form (Mandatory Manual Fallback) */}
       <div className="border-t border-slate-200 pt-4 space-y-4">
-        <div className="text-xs font-semibold text-slate-800">
-          Editable booking specification (manual fallback enabled)
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs font-semibold text-slate-800">
+            Editable booking specification (manual fallback enabled)
+          </div>
+          <div className="text-[11px] font-medium text-slate-500">
+            Destination:{' '}
+            {parser.recurrence === 'recurring' ? (
+              <span className="text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded font-semibold">
+                Normal Teaching Weeks Queue (Recurring)
+              </span>
+            ) : parser.targetWeek === 7 ? (
+              <span className="text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded font-semibold">
+                🎪 Spectra Fest Week 7 Queue
+              </span>
+            ) : (
+              <span className="text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded font-semibold">
+                📚 Normal Teaching Week {parser.targetWeek} Queue
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Recurrence & Target Week Configuration */}
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-3 text-xs">
+          <div className="flex flex-wrap items-center gap-4">
+            <div>
+              <span className="font-semibold text-slate-700 block mb-1">Event recurrence:</span>
+              <div className="inline-flex rounded-md shadow-sm border border-slate-300 bg-white p-0.5">
+                <button
+                  type="button"
+                  onClick={() => parser.setRecurrence('once')}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                    parser.recurrence === 'once'
+                      ? 'bg-blue-700 text-white shadow-sm'
+                      : 'text-slate-700 hover:text-slate-900'
+                  }`}
+                >
+                  Once (One-time event)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => parser.setRecurrence('recurring')}
+                  className={`px-3 py-1 text-xs font-medium rounded transition-colors ${
+                    parser.recurrence === 'recurring'
+                      ? 'bg-blue-700 text-white shadow-sm'
+                      : 'text-slate-700 hover:text-slate-900'
+                  }`}
+                >
+                  Recurring (Every week)
+                </button>
+              </div>
+            </div>
+
+            {parser.recurrence === 'once' ? (
+              <div className="flex-1 min-w-[240px]">
+                <label className="font-semibold text-slate-700 block mb-1">
+                  Target week (Which week do you need this slot?):
+                </label>
+                <select
+                  value={parser.targetWeek ?? 7}
+                  onChange={(e) => parser.setTargetWeek(Number(e.target.value))}
+                  className="w-full p-1.5 border border-slate-300 rounded bg-white text-xs font-medium text-slate-800 focus:border-blue-600 focus:outline-none"
+                >
+                  <option value={7}>Week 7 — Spectra Cultural Fest Week (Enters Spectra Queue)</option>
+                  <option value={1}>Week 1 — Normal Semester Teaching Week</option>
+                  <option value={2}>Week 2 — Normal Semester Teaching Week</option>
+                  <option value={3}>Week 3 — Normal Semester Teaching Week</option>
+                  <option value={4}>Week 4 — Normal Semester Teaching Week</option>
+                  <option value={5}>Week 5 — Normal Semester Teaching Week</option>
+                  <option value={6}>Week 6 — Normal Semester Teaching Week</option>
+                  <option value={8}>Week 8 — Normal Semester Teaching Week</option>
+                  <option value={9}>Week 9 — Normal Semester Teaching Week</option>
+                  <option value={10}>Week 10 — Normal Semester Teaching Week</option>
+                  <option value={11}>Week 11 — Normal Semester Teaching Week</option>
+                  <option value={12}>Week 12 — Normal Semester Teaching Week</option>
+                  <option value={13}>Week 13 — Normal Semester Teaching Week</option>
+                  <option value={14}>Week 14 — Normal Semester Teaching Week</option>
+                </select>
+              </div>
+            ) : (
+              <div className="flex-1 min-w-[240px] text-slate-600 text-[11px] flex items-center gap-1.5 bg-white p-2 rounded border border-slate-200">
+                <span>🔄 <strong>Recurring weekly event:</strong> Automatically routed to the Normal Teaching Weeks Queue so classes are never displaced.</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">

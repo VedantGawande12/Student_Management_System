@@ -54,6 +54,95 @@ html, body {
   box-shadow: var(--focus-ring);
 }
 
+/* ── Museum of Motion Animation System (Tympanus / Codrops inspiration) ── */
+
+@keyframes momMarquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes momFadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes momFadeSlideRight {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes momRevealScale {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes momAmbientDrift {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes momPulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.88; transform: scale(1.02); }
+}
+
+.mom-animate-fade-up {
+  animation: momFadeSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mom-animate-reveal {
+  animation: momRevealScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.mom-delay-1 { animation-delay: 50ms; }
+.mom-delay-2 { animation-delay: 100ms; }
+.mom-delay-3 { animation-delay: 150ms; }
+.mom-delay-4 { animation-delay: 200ms; }
+.mom-delay-5 { animation-delay: 250ms; }
+
+.mom-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: momMarquee 38s linear infinite;
+  will-change: transform;
+}
+
+.mom-marquee-track:hover,
+.mom-marquee-track:focus-within {
+  animation-play-state: paused;
+}
+
+.mom-card-interactive {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+}
+
+.mom-card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08);
+}
+
+.mom-badge-pulse {
+  animation: momPulseGlow 3s ease-in-out infinite;
+}
+
 /* Floor 7: prefers-reduced-motion fallback */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
@@ -61,5 +150,8 @@ html, body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .mom-marquee-track {
+    animation: none !important;
   }
 }

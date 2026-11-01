@@ -106,7 +106,7 @@ export const App: React.FC = () => {
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Spectra queue ({scheduleState.bookings.length})</span>
+              <span>Venue queues ({scheduleState.bookings.length})</span>
             </button>
 
             <button
@@ -139,7 +139,7 @@ export const App: React.FC = () => {
             <span>Loading schedule state...</span>
           </div>
         ) : (
-          <>
+          <div className="mom-animate-fade-up">
             {activeTab === 'timetables' && (
               <TimetableGridView
                 sessions={scheduleState.activeSessions}
@@ -199,7 +199,7 @@ export const App: React.FC = () => {
                 </div>
               </div>
             )}
-          </>
+          </div>
         )}
       </main>
 

@@ -21,6 +21,8 @@ export function useBookingParser(onBookingCreated?: () => void) {
   const [needs, setNeeds] = useState<string[]>([]);
   const [requestedRoom, setRequestedRoom] = useState<string>('');
   const [requestedCategory, setRequestedCategory] = useState<string>('club_event');
+  const [recurrence, setRecurrence] = useState<'once' | 'recurring'>('once');
+  const [targetWeek, setTargetWeek] = useState<number | null>(7);
   const [roomWarning, setRoomWarning] = useState<string | null>(null);
   const [followUp, setFollowUp] = useState<string | null>(null);
 
@@ -50,6 +52,8 @@ export function useBookingParser(onBookingCreated?: () => void) {
       setNeeds(res.needs || []);
       setRequestedRoom(res.requested_room || '');
       setRequestedCategory(res.requested_category || 'club_event');
+      if (res.recurrence) setRecurrence(res.recurrence);
+      if (res.target_week !== undefined && res.target_week !== null) setTargetWeek(res.target_week);
       setRoomWarning(res.room_warning || null);
       setFollowUp(res.follow_up || null);
 
@@ -66,6 +70,7 @@ export function useBookingParser(onBookingCreated?: () => void) {
     setError(null);
     setSuccessMessage(null);
     try {
+      const computedWeekScope = recurrence === 'once' ? (targetWeek === 7 ? 'spectra' : 'normal') : 'normal';
       const payload: Partial<BookingRequest> = {
         title: title || 'Campus Venue Request',
         attendance: Number(attendance) || 50,
@@ -75,10 +80,14 @@ export function useBookingParser(onBookingCreated?: () => void) {
         needs,
         requested_room: requestedRoom.trim() ? requestedRoom.trim() : null,
         requested_category: requestedCategory,
-        raw_text: inputText || title
+        raw_text: inputText || title,
+        recurrence,
+        target_week: recurrence === 'once' ? (targetWeek ?? 7) : null,
+        week_scope: computedWeekScope
       };
       const res = await apiSubmitBooking(payload);
-      setSuccessMessage(`Booking request ${res.booking.id} created successfully!`);
+      const queueName = computedWeekScope === 'spectra' ? 'Spectra Fest Week 7' : (recurrence === 'recurring' ? 'Normal Teaching Weeks (Recurring)' : `Normal Teaching Week ${targetWeek}`);
+      setSuccessMessage(`Booking request ${res.booking.id} created and queued into ${queueName} successfully!`);
       if (onBookingCreated) onBookingCreated();
       return res;
     } catch (err: any) {
@@ -87,7 +96,7 @@ export function useBookingParser(onBookingCreated?: () => void) {
     } finally {
       setIsSubmitting(false);
     }
-  }, [title, attendance, durationPeriods, day, fromPeriod, toPeriod, roomTypes, needs, requestedRoom, requestedCategory, inputText, onBookingCreated]);
+  }, [title, attendance, durationPeriods, day, fromPeriod, toPeriod, roomTypes, needs, requestedRoom, requestedCategory, inputText, recurrence, targetWeek, onBookingCreated]);
 
   return {
     inputText,
@@ -110,6 +119,8 @@ export function useBookingParser(onBookingCreated?: () => void) {
     needs, setNeeds,
     requestedRoom, setRequestedRoom,
     requestedCategory, setRequestedCategory,
+    recurrence, setRecurrence,
+    targetWeek, setTargetWeek,
     roomWarning,
     followUp
   };

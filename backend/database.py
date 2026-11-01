@@ -130,6 +130,36 @@ def get_database_status() -> Dict[str, Any]:
             "message": f"Supabase configured but connection ping failed ({e}). Operating in local fallback mode."
         }
 
+def resolve_dataset_id(client, dataset_id_str: Optional[str] = None) -> Optional[str]:
+    """
+    Resolves the UUID for a dataset by checking exact ID, lowercase ID,
+    uppercase ID, or falling back to the most recent dataset.
+    """
+    target = (dataset_id_str or "cit-public-v1").strip()
+    try:
+        # 1. Exact match
+        res = client.table("datasets").select("id").eq("source_dataset_id", target).execute()
+        if res.data:
+            return res.data[0]["id"]
+
+        # 2. Lowercase match
+        res = client.table("datasets").select("id").eq("source_dataset_id", target.lower()).execute()
+        if res.data:
+            return res.data[0]["id"]
+
+        # 3. Uppercase match
+        res = client.table("datasets").select("id").eq("source_dataset_id", target.upper()).execute()
+        if res.data:
+            return res.data[0]["id"]
+
+        # 4. Fallback to latest active dataset
+        res = client.table("datasets").select("id").order("created_at", desc=True).limit(1).execute()
+        if res.data:
+            return res.data[0]["id"]
+    except Exception as e:
+        logger.debug(f"Failed to resolve dataset ID: {e}")
+    return None
+
 def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = None) -> Dict[str, Any]:
     """
     Syncs the complete active in-memory dataset to Supabase relational tables:
@@ -319,11 +349,42 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
                 exam_rows = [{
                     "dataset_id": db_dataset_id,
                     "id": e["id"],
-                    "session_id": e.get("session_id"),
-                    "name": e.get("name", e["id"]),
-                    "duration_periods": e.get("duration_periods", 2)
+                    "size": e.get("size", 0),
+                    "duration_hours": e.get("duration_hours", 2)
                 } for e in exams]
                 client.table("exams").upsert(exam_rows, on_conflict="dataset_id,id").execute()
+
+                # Sync exam_courses
+                exam_course_rows = []
+                for e in exams:
+                    for cid in e.get("course_ids", []):
+                        exam_course_rows.append({
+                            "dataset_id": db_dataset_id,
+                            "exam_id": e["id"],
+                            "course_id": cid
+                        })
+                if exam_course_rows:
+                    try:
+                        client.table("exam_courses").delete().eq("dataset_id", db_dataset_id).execute()
+                        client.table("exam_courses").insert(exam_course_rows).execute()
+                    except Exception as ex:
+                        logger.debug(f"Exam courses sync: {ex}")
+
+                # Sync exam_groups
+                exam_group_rows = []
+                for e in exams:
+                    for gid in e.get("groups", []):
+                        exam_group_rows.append({
+                            "dataset_id": db_dataset_id,
+                            "exam_id": e["id"],
+                            "group_id": gid
+                        })
+                if exam_group_rows:
+                    try:
+                        client.table("exam_groups").delete().eq("dataset_id", db_dataset_id).execute()
+                        client.table("exam_groups").insert(exam_group_rows).execute()
+                    except Exception as ex:
+                        logger.debug(f"Exam groups sync: {ex}")
             except Exception as ex:
                 logger.debug(f"Exams sync: {ex}")
 
@@ -348,24 +409,24 @@ def sync_dataset_to_supabase(dataset: Dict[str, Any], user_id: Optional[str] = N
 
 def sync_schedule_to_supabase(
     schedule_data: Dict[str, Any],
-    dataset_id_str: str = "CIT_PUBLIC_V1",
+    dataset_id_str: str = "cit-public-v1",
     status: str = "active",
     source_kind: str = "baseline",
     val_report: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
-    Syncs generated schedule to Supabase schedules, scheduled_sessions, and schedule_bookings tables.
+    Syncs generated schedule to Supabase schedules, scheduled_sessions,
+    schedule_bookings, scheduled_exams, and scheduled_exam_rooms tables.
     """
     client = get_supabase_client()
     if not client:
         return {"success": False, "mode": "local_fallback", "message": "Supabase client not active"}
 
     try:
-        # Resolve dataset UUID
-        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
-        if not ds_res.data:
+        # Resolve dataset UUID using robust case-insensitive resolver
+        ds_id = resolve_dataset_id(client, dataset_id_str)
+        if not ds_id:
             return {"success": False, "message": f"Dataset {dataset_id_str} not found in Supabase"}
-        ds_id = ds_res.data[0]["id"]
 
         # Insert schedule row
         sched_row = {
@@ -408,11 +469,37 @@ def sync_schedule_to_supabase(
             } for b in fest_bookings]
             client.table("schedule_bookings").insert(dec_rows).execute()
 
+        # Populate scheduled_exams and scheduled_exam_rooms if present
+        sched_exams = schedule_data.get("exams", [])
+        if sched_exams:
+            try:
+                exam_entry_rows = [{
+                    "schedule_id": sched_id,
+                    "exam_id": ex_item["exam_id"],
+                    "day": ex_item["day"],
+                    "exam_session": ex_item["session"]
+                } for ex_item in sched_exams]
+                client.table("scheduled_exams").insert(exam_entry_rows).execute()
+
+                exam_room_rows = []
+                for ex_item in sched_exams:
+                    for rid in ex_item.get("rooms", []):
+                        exam_room_rows.append({
+                            "schedule_id": sched_id,
+                            "exam_id": ex_item["exam_id"],
+                            "room_id": rid
+                        })
+                if exam_room_rows:
+                    client.table("scheduled_exam_rooms").insert(exam_room_rows).execute()
+            except Exception as ex:
+                logger.debug(f"Scheduled exams sync: {ex}")
+
         return {
             "success": True,
             "schedule_id": sched_id,
             "sessions_synced": len(sessions),
-            "bookings_synced": len(fest_bookings)
+            "bookings_synced": len(fest_bookings),
+            "exams_synced": len(sched_exams)
         }
     except Exception as e:
         logger.error(f"Error syncing schedule to Supabase: {e}")
@@ -439,7 +526,7 @@ def record_audit_log(actor_name: str, action: str, details: Optional[Dict[str, A
     except Exception as e:
         logger.debug(f"Audit log push skipped: {e}")
 
-def save_booking_request_to_supabase(booking: Dict[str, Any], dataset_id_str: str = "CIT_PUBLIC_V1") -> Dict[str, Any]:
+def save_booking_request_to_supabase(booking: Dict[str, Any], dataset_id_str: str = "cit-public-v1") -> Dict[str, Any]:
     """
     Persists a newly submitted booking request and its windows directly to Supabase.
     """
@@ -447,10 +534,9 @@ def save_booking_request_to_supabase(booking: Dict[str, Any], dataset_id_str: st
     if not client:
         return {"success": False, "mode": "local_fallback", "message": "Supabase not connected"}
     try:
-        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
-        if not ds_res.data:
+        ds_id = resolve_dataset_id(client, dataset_id_str)
+        if not ds_id:
             return {"success": False, "message": f"Dataset {dataset_id_str} not found in Supabase"}
-        ds_id = ds_res.data[0]["id"]
 
         row = {
             "dataset_id": ds_id,
@@ -494,7 +580,7 @@ def save_booking_request_to_supabase(booking: Dict[str, Any], dataset_id_str: st
         logger.warning(f"Failed to persist booking to Supabase: {e}")
         return {"success": False, "error": str(e)}
 
-def save_booking_decision_to_supabase(decision: Dict[str, Any], dataset_id_str: str = "CIT_PUBLIC_V1") -> Dict[str, Any]:
+def save_booking_decision_to_supabase(decision: Dict[str, Any], dataset_id_str: str = "cit-public-v1") -> Dict[str, Any]:
     """
     Persists an approval/rejection decision on a booking request directly to Supabase.
     """
@@ -502,10 +588,9 @@ def save_booking_decision_to_supabase(decision: Dict[str, Any], dataset_id_str: 
     if not client:
         return {"success": False, "mode": "local_fallback"}
     try:
-        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
-        if not ds_res.data:
+        ds_id = resolve_dataset_id(client, dataset_id_str)
+        if not ds_id:
             return {"success": False, "message": "Dataset not found"}
-        ds_id = ds_res.data[0]["id"]
 
         sched_res = client.table("schedules").select("id,payload").eq("dataset_id", ds_id).eq("status", "active").order("created_at", desc=True).limit(1).execute()
         if not sched_res.data:
@@ -539,7 +624,7 @@ def save_booking_decision_to_supabase(decision: Dict[str, Any], dataset_id_str: 
         logger.warning(f"Failed to persist booking decision to Supabase: {e}")
         return {"success": False, "error": str(e)}
 
-def save_cancellation_to_supabase(cancellation: Dict[str, Any], dataset_id_str: str = "CIT_PUBLIC_V1") -> Dict[str, Any]:
+def save_cancellation_to_supabase(cancellation: Dict[str, Any], dataset_id_str: str = "cit-public-v1") -> Dict[str, Any]:
     """
     Persists a booking cancellation directly to Supabase.
     """
@@ -547,10 +632,9 @@ def save_cancellation_to_supabase(cancellation: Dict[str, Any], dataset_id_str: 
     if not client:
         return {"success": False, "mode": "local_fallback"}
     try:
-        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
-        if not ds_res.data:
+        ds_id = resolve_dataset_id(client, dataset_id_str)
+        if not ds_id:
             return {"success": False}
-        ds_id = ds_res.data[0]["id"]
 
         row = {
             "dataset_id": ds_id,
@@ -568,7 +652,7 @@ def save_cancellation_to_supabase(cancellation: Dict[str, Any], dataset_id_str: 
 def save_disruption_to_supabase(
     disruption: Dict[str, Any],
     diff: Optional[Dict[str, Any]] = None,
-    dataset_id_str: str = "CIT_PUBLIC_V1",
+    dataset_id_str: str = "cit-public-v1",
     status: str = "pending"
 ) -> Dict[str, Any]:
     """
@@ -578,10 +662,9 @@ def save_disruption_to_supabase(
     if not client:
         return {"success": False, "mode": "local_fallback"}
     try:
-        ds_res = client.table("datasets").select("id").eq("source_dataset_id", dataset_id_str).execute()
-        if not ds_res.data:
+        ds_id = resolve_dataset_id(client, dataset_id_str)
+        if not ds_id:
             return {"success": False}
-        ds_id = ds_res.data[0]["id"]
 
         row = {
             "dataset_id": ds_id,
@@ -596,7 +679,7 @@ def save_disruption_to_supabase(
         logger.warning(f"Failed to persist disruption to Supabase: {e}")
         return {"success": False, "error": str(e)}
 
-def load_data_from_supabase(dataset_id_str: str = "CIT_PUBLIC_V1") -> Optional[Dict[str, Any]]:
+def load_data_from_supabase(dataset_id_str: str = "cit-public-v1") -> Optional[Dict[str, Any]]:
     """
     Loads saved bookings, cancellations, dataset source payload, and active schedule from Supabase if present.
     """
@@ -604,10 +687,12 @@ def load_data_from_supabase(dataset_id_str: str = "CIT_PUBLIC_V1") -> Optional[D
     if not client:
         return None
     try:
-        ds_res = client.table("datasets").select("id,source_payload").eq("source_dataset_id", dataset_id_str).limit(1).execute()
+        ds_id = resolve_dataset_id(client, dataset_id_str)
+        if not ds_id:
+            return None
+        ds_res = client.table("datasets").select("id,source_payload").eq("id", ds_id).limit(1).execute()
         if not ds_res.data:
             return None
-        ds_id = ds_res.data[0]["id"]
         source_payload = ds_res.data[0].get("source_payload")
 
         # Fetch bookings

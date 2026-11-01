@@ -20,9 +20,30 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
   const [explainingId, setExplainingId] = useState<string | null>(null);
   const [explanationText, setExplanationText] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [queueFilter, setQueueFilter] = useState<'all' | 'spectra' | 'normal'>('all');
 
   const decMap = new Map<string, BookingDecision>();
   for (const d of decisions) decMap.set(d.request_id, d);
+
+  const isSpectraReq = (req: BookingRequest) =>
+    req.week_scope === 'spectra' ||
+    req.target_week === 7 ||
+    (!req.week_scope && (req.target_week === undefined || req.target_week === null));
+
+  const isNormalReq = (req: BookingRequest) =>
+    req.week_scope === 'normal' ||
+    req.recurrence === 'recurring' ||
+    (req.target_week !== undefined && req.target_week !== null && req.target_week !== 7);
+
+  const spectraRequests = requests.filter(isSpectraReq);
+  const normalRequests = requests.filter(isNormalReq);
+
+  const displayedRequests =
+    queueFilter === 'all'
+      ? requests
+      : queueFilter === 'spectra'
+      ? spectraRequests
+      : normalRequests;
 
   const handleApprove = async (req: BookingRequest) => {
     setActionError(null);
@@ -74,18 +95,69 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden space-y-3 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden space-y-4 p-4">
+      {/* Header and Queue Switcher Tabs */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
         <div>
           <h2 className="text-base font-bold text-slate-900">
-            Spectra week (week 7) venue queue and decisions
+            {queueFilter === 'spectra'
+              ? '🎪 Spectra Fest Week (Week 7) Venue Queue'
+              : queueFilter === 'normal'
+              ? '📚 Normal Teaching Weeks Venue Queue'
+              : 'Campus Venue Queues & Decisions'}
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Processed strictly in priority order (institute event &gt; guest lecture &gt; department event &gt; club event) with earliest submission tie-breaking. 0 priority inversions guaranteed.
+            {queueFilter === 'spectra'
+              ? 'Processed strictly in institutional priority order with cultural fest overrides. 0 priority inversions guaranteed.'
+              : queueFilter === 'normal'
+              ? 'Regular semester ad-hoc and recurring requests. Academic timetable classes are protected and never displaced.'
+              : 'Unified view of all campus venue requests across normal academic teaching weeks and Spectra Fest.'}
           </p>
         </div>
-        <div className="text-xs bg-slate-50 px-2.5 py-1 rounded border border-slate-200 text-slate-700">
-          Total requests: <span className="font-semibold text-slate-900">{requests.length}</span>
+
+        {/* Segmented Queue Filter Buttons */}
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-50 p-1 rounded-lg border border-slate-200">
+          <button
+            onClick={() => setQueueFilter('all')}
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              queueFilter === 'all'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+            }`}
+          >
+            <span>All Requests</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${queueFilter === 'all' ? 'bg-slate-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+              {requests.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setQueueFilter('spectra')}
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              queueFilter === 'spectra'
+                ? 'bg-purple-700 text-white shadow-sm'
+                : 'text-purple-800 hover:bg-purple-100/70'
+            }`}
+          >
+            <span>🎪 Spectra Fest (Week 7)</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${queueFilter === 'spectra' ? 'bg-purple-900 text-white' : 'bg-purple-100 text-purple-800'}`}>
+              {spectraRequests.length}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setQueueFilter('normal')}
+            className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              queueFilter === 'normal'
+                ? 'bg-blue-700 text-white shadow-sm'
+                : 'text-blue-800 hover:bg-blue-100/70'
+            }`}
+          >
+            <span>📚 Normal Teaching Weeks</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${queueFilter === 'normal' ? 'bg-blue-900 text-white' : 'bg-blue-100 text-blue-800'}`}>
+              {normalRequests.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -101,6 +173,7 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
           <thead className="bg-slate-100/75 text-slate-700 font-medium border-b border-slate-200">
             <tr>
               <th className="py-2.5 px-3">Req id</th>
+              <th className="py-2.5 px-3">Queue & week</th>
               <th className="py-2.5 px-3">Event and requester</th>
               <th className="py-2.5 px-3">Category and role</th>
               <th className="py-2.5 px-3">Attendance</th>
@@ -112,27 +185,55 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {requests.map((req) => {
-              const dec = decMap.get(req.id);
-              const status = dec?.status || 'pending';
-              const isApproved = status === 'approved';
-              const isAlt = status === 'alternative_offered';
-              const isRejected = status === 'rejected';
+            {displayedRequests.length === 0 ? (
+              <tr>
+                <td colSpan={10} className="py-8 text-center text-slate-500">
+                  No venue requests in this queue. Submit a request using the Booking Copilot!
+                </td>
+              </tr>
+            ) : (
+              displayedRequests.map((req) => {
+                const dec = decMap.get(req.id);
+                const status = dec?.status || 'pending';
+                const isApproved = status === 'approved';
+                const isAlt = status === 'alternative_offered';
+                const isRejected = status === 'rejected';
 
-              const allowApprove = canApproveBooking(currentUser, req);
-              const allowCancel = canCancelBooking(currentUser, req);
-              const isSelf = req.requester === currentUser?.name || req.requester === currentUser?.email;
+                const allowApprove = canApproveBooking(currentUser, req);
+                const allowCancel = canCancelBooking(currentUser, req);
+                const isSelf = req.requester === currentUser?.name || req.requester === currentUser?.email;
 
-              return (
-                <tr key={req.id} className="hover:bg-slate-50 transition-colors">
-                  {/* ID */}
-                  <td className="py-2.5 px-3 font-semibold font-mono text-slate-900">{req.id}</td>
+                const isSpectra = isSpectraReq(req);
+                const isRecur = req.recurrence === 'recurring';
+                const targetWk = req.target_week;
 
-                  {/* Title & Requester */}
-                  <td className="py-2.5 px-3">
-                    <div className="font-semibold text-slate-900">{req.title}</div>
-                    <div className="text-[11px] text-slate-500">{req.requester}</div>
-                  </td>
+                return (
+                  <tr key={req.id} className="hover:bg-slate-50 transition-colors">
+                    {/* ID */}
+                    <td className="py-2.5 px-3 font-semibold font-mono text-slate-900">{req.id}</td>
+
+                    {/* Queue Scope & Week */}
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      {isSpectra ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
+                          🎪 Spectra (W7)
+                        </span>
+                      ) : isRecur ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+                          🔄 Normal (Weekly)
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-200">
+                          📚 Normal (W{targetWk ?? 3})
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Title & Requester */}
+                    <td className="py-2.5 px-3">
+                      <div className="font-semibold text-slate-900">{req.title}</div>
+                      <div className="text-[11px] text-slate-500">{req.requester}</div>
+                    </td>
 
                   {/* Category */}
                   <td className="py-2.5 px-3">
@@ -247,7 +348,7 @@ export const SpectraQueueView: React.FC<SpectraQueueViewProps> = ({
                   </td>
                 </tr>
               );
-            })}
+            }))}
           </tbody>
         </table>
       </div>

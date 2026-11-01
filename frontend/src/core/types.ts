@@ -77,6 +77,9 @@ export interface BookingRequest {
   mandatory_for_groups: string[];
   series_id: string | null;
   raw_text?: string;
+  recurrence?: 'once' | 'recurring';
+  target_week?: number | null;
+  week_scope?: 'spectra' | 'normal';
 }
 
 export interface BookingDecision {
@@ -243,5 +246,8 @@ export interface AIParseResult {
   room_warning: string | null;
   follow_up: string | null;
   raw_text: string;
+  recurrence?: 'once' | 'recurring';
+  target_week?: number | null;
+  week_scope?: 'spectra' | 'normal';
 }
 

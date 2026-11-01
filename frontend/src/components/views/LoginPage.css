@@ -1,647 +1,552 @@
-/* Hallmark · cit-login · theme: custom · idea: "the seal of access — role reveals context before entry" · vibe: "institutional dark-left crisp-right data-alive" */
-/* critique: deep navy animated canvas left, white credential panel right; consistent with existing index.css token system */
-/* waive: 44b — hero spans two locked panels; all key action content is in the visible right panel at 1280x800 */
+/* Hallmark · cit-login · theme: museum-of-motion · idea: "architectural exhibition of institutional governance — deterministic access passes before entry" · vibe: "editorial museum deep-obsidian gold-and-cobalt kinetic-marquee" */
+/* critique: P5 H5 E5 S5 R4 V5 · weakest: R, museum exhibition marquee keeps kinetic institutional telemetry */
+/* answered F3 · display heading set solid and untracked */
 
-/* ── Root layout ─────────────────────────────────────────────────────────── */
+:root {
+  --lp-bg: #090e17;
+  --lp-bg-elevated: #0f172a;
+  --lp-bg-card: #141e33;
+  --lp-bg-card-active: #1a2845;
+  --lp-bg-input: #0b1220;
+  --lp-surface-right: #ffffff;
+  --lp-surface-alt: #f8fafc;
+  --lp-border-dark: rgba(148, 163, 184, 0.15);
+  --lp-border-dark-active: rgba(96, 165, 250, 0.45);
+  --lp-border-light: #e2e8f0;
+  --lp-border-light-focus: #2563eb;
+  --lp-ink-white: #f8fafc;
+  --lp-ink-muted: #94a3b8;
+  --lp-ink-faint: #64748b;
+  --lp-ink-dark: #0f172a;
+  --lp-ink-dark-muted: #475569;
+  --lp-ink-dark-faint: #64748b;
+  --lp-accent-gold: #d97706;
+  --lp-accent-gold-bg: rgba(217, 119, 6, 0.12);
+  --lp-accent-gold-border: rgba(217, 119, 6, 0.3);
+  --lp-accent-blue: #1d4ed8;
+  --lp-accent-blue-hover: #1e40af;
+  --lp-accent-emerald: #059669;
+  --lp-accent-emerald-bg: #ecfdf5;
+  --lp-accent-emerald-border: #a7f3d0;
+  --lp-accent-rose: #dc2626;
+  --lp-accent-rose-bg: #fef2f2;
+  --lp-accent-rose-border: #fecaca;
+  --lp-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --lp-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --lp-focus-ring: 0 0 0 2px #0f172a, 0 0 0 4px #2563eb;
+  --lp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --lp-space-1: 0.25rem;
+  --lp-space-2: 0.5rem;
+  --lp-space-3: 0.75rem;
+  --lp-space-4: 1rem;
+  --lp-space-5: 1.25rem;
+  --lp-space-6: 1.5rem;
+  --lp-space-8: 2rem;
+  --lp-space-10: 2.5rem;
+  --lp-radius-sm: 4px;
+  --lp-radius-md: 6px;
+  --lp-radius-lg: 8px;
+}
+
+/* ── Container Layout ─────────────────────────────────────────────────────── */
 .lp-root {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
+  background-color: var(--lp-bg);
+  color: var(--lp-ink-white);
+  font-family: var(--lp-font-sans);
   overflow-x: clip;
 }
 
-/* ── Left panel ──────────────────────────────────────────────────────────── */
-.lp-left {
-  flex: 0 0 42%;
-  background-color: #0c1525;
-  color: #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  padding: 2.5rem 2.5rem 2rem;
-  position: relative;
+/* ── Museum of Motion Kinetic Marquee Header ─────────────────────────────── */
+.lp-marquee-banner {
+  background-color: var(--lp-bg-elevated);
+  border-bottom: 1px solid var(--lp-border-dark);
+  padding: var(--lp-space-2) 0;
   overflow: hidden;
+  user-select: none;
 }
 
-/* Subtle ruled background pattern */
-.lp-left::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
-  background-size: 32px 32px;
-  pointer-events: none;
+.lp-marquee-inner {
+  display: flex;
+  width: max-content;
+  animation: momMarquee 42s linear infinite;
+  will-change: transform;
 }
 
-/* ── Wordmark ────────────────────────────────────────────────────────────── */
-.lp-wordmark {
+.lp-marquee-banner:hover .lp-marquee-inner,
+.lp-marquee-banner:focus-within .lp-marquee-inner {
+  animation-play-state: paused;
+}
+
+.lp-marquee-segment {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
-  margin-bottom: 2.5rem;
-  position: relative;
-  z-index: 1;
+  gap: var(--lp-space-6);
+  padding-right: var(--lp-space-6);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--lp-ink-muted);
+  white-space: nowrap;
 }
 
-.lp-wordmark-badge {
+.lp-marquee-highlight {
+  color: var(--lp-ink-white);
+  font-weight: 600;
+}
+
+.lp-marquee-sep {
+  color: var(--lp-accent-gold);
+  font-size: 0.625rem;
+}
+
+/* ── Main Two-Column Exhibit Stage ───────────────────────────────────────── */
+.lp-stage {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .lp-stage {
+    flex-direction: column;
+  }
+}
+
+/* ── Left Exhibit Column (Museum Exhibition Architecture) ─────────────────── */
+.lp-left-column {
+  flex: 0 0 46%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: var(--lp-space-8) var(--lp-space-8);
+  border-right: 1px solid var(--lp-border-dark);
+  position: relative;
+  background-color: var(--lp-bg);
+}
+
+.lp-institution-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--lp-space-3);
+  margin-bottom: var(--lp-space-6);
+}
+
+.lp-brand-emblem {
   width: 40px;
   height: 40px;
-  background-color: #1e3a8a;
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  border-radius: 6px;
+  border-radius: var(--lp-radius-md);
+  background-color: var(--lp-accent-blue);
+  color: var(--lp-ink-white);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-.lp-wordmark-text {
+.lp-brand-titles {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
 }
 
-.lp-wordmark-name {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #f1f5f9;
+.lp-brand-name {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--lp-ink-white);
   line-height: 1.25;
 }
 
-.lp-wordmark-sub {
-  font-size: 0.6875rem;
-  color: #64748b;
+.lp-brand-sub {
+  font-size: 0.75rem;
+  color: var(--lp-ink-muted);
   line-height: 1.3;
 }
 
-/* ── Canvas area ─────────────────────────────────────────────────────────── */
-.lp-canvas-area {
+/* ── Exhibition Showcase Card ────────────────────────────────────────────── */
+.lp-exhibit-display {
   flex: 1;
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  position: relative;
+  min-height: 340px;
 }
 
-.lp-canvas-panel {
-  position: absolute;
-  inset: 0;
+.lp-exhibit-frame {
+  background-color: var(--lp-bg-elevated);
+  border: 1px solid var(--lp-border-dark);
+  border-radius: var(--lp-radius-lg);
+  padding: var(--lp-space-5);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  pointer-events: none;
+  gap: var(--lp-space-4);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.4);
+  position: relative;
 }
 
-.lp-grid-label {
+.lp-exhibit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--lp-border-dark);
+  padding-bottom: var(--lp-space-3);
+}
+
+.lp-exhibit-label {
   font-size: 0.6875rem;
-  color: #475569;
-  font-weight: 500;
-  margin-bottom: 0.75rem;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
-/* ── Timetable canvas (Admin) ────────────────────────────────────────────── */
-.lp-timetable-row {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
-  margin-bottom: 4px;
-}
-
-.lp-timetable-cell {
-  background-color: rgba(30, 58, 138, 0.25);
-  border: 1px solid rgba(59, 130, 246, 0.12);
-  border-radius: 3px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: left center;
-}
-
-.lp-cell-tag {
-  font-size: 0.5625rem;
   font-weight: 600;
-  padding: 1px 5px;
-  border-radius: 2px;
-  font-family: ui-monospace, 'Courier New', monospace;
+  color: var(--lp-accent-gold);
 }
 
-.lp-cell-lab { background-color: rgba(234, 179, 8, 0.2); color: #fde047; }
-.lp-cell-lec { background-color: rgba(59, 130, 246, 0.25); color: #93c5fd; }
-.lp-cell-tut { background-color: rgba(34, 197, 94, 0.2); color: #86efac; }
-
-/* ── Bar chart canvas (Coordinator) ─────────────────────────────────────── */
-.lp-bar-chart {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-}
-
-.lp-bar-row {
-  display: grid;
-  grid-template-columns: 3rem 1fr 2.5rem;
-  align-items: center;
-  gap: 0.625rem;
-}
-
-.lp-bar-label {
-  font-size: 0.625rem;
-  color: #94a3b8;
-  font-family: ui-monospace, 'Courier New', monospace;
-  text-align: right;
-}
-
-.lp-bar-track {
-  height: 6px;
-  background-color: rgba(148, 163, 184, 0.1);
-  border-radius: 2px;
-  overflow: clip;
-}
-
-.lp-bar-fill {
-  height: 100%;
-  background-color: #2563eb;
-  border-radius: 2px;
-  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.lp-bar-val {
-  font-size: 0.5625rem;
-  color: #64748b;
-  font-family: ui-monospace, 'Courier New', monospace;
-}
-
-/* ── Faculty grid canvas ─────────────────────────────────────────────────── */
-.lp-faculty-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.lp-faculty-header {
-  display: flex;
-  gap: 6px;
-  padding-left: 0;
-}
-
-.lp-fac-day {
-  flex: 1;
-  text-align: center;
-  font-size: 0.5625rem;
-  color: #475569;
-  font-family: ui-monospace, 'Courier New', monospace;
-}
-
-.lp-faculty-row {
-  display: flex;
-  gap: 6px;
-}
-
-.lp-fac-slot {
-  flex: 1;
-  height: 32px;
-  border-radius: 3px;
-}
-
-.lp-fac-filled {
-  background-color: rgba(30, 58, 138, 0.55);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-.lp-fac-empty {
-  background-color: rgba(148, 163, 184, 0.06);
-  border: 1px solid rgba(148, 163, 184, 0.08);
-}
-
-/* ── Venue list canvas (Club) ────────────────────────────────────────────── */
-.lp-venue-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.lp-venue-row {
-  display: grid;
-  grid-template-columns: 3rem 1fr 4rem 4rem;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(148, 163, 184, 0.08);
-  border-radius: 4px;
-  padding: 6px 10px;
-}
-
-.lp-venue-id {
-  font-size: 0.5625rem;
-  font-family: ui-monospace, 'Courier New', monospace;
-  color: #93c5fd;
+.lp-exhibit-badge {
+  font-size: 0.6875rem;
   font-weight: 600;
+  background-color: var(--lp-accent-emerald-bg);
+  color: var(--lp-accent-emerald);
+  padding: var(--lp-space-1) var(--lp-space-2);
+  border-radius: var(--lp-radius-sm);
+  border: 1px solid var(--lp-accent-emerald-border);
 }
 
-.lp-venue-name {
-  font-size: 0.625rem;
-  color: #cbd5e1;
-}
-
-.lp-venue-cap {
-  font-size: 0.5625rem;
-  color: #64748b;
-  font-family: ui-monospace, 'Courier New', monospace;
-  text-align: right;
-}
-
-.lp-venue-status {
-  font-size: 0.5625rem;
-  font-weight: 600;
-  text-align: right;
-  font-family: ui-monospace, 'Courier New', monospace;
-}
-
-.lp-status-free { color: #4ade80; }
-.lp-status-booked { color: #f87171; }
-
-/* ── Canvas shared badge ─────────────────────────────────────────────────── */
-.lp-canvas-badge {
-  margin-top: 1.5rem;
-  display: inline-flex;
-  align-self: flex-start;
-  font-size: 0.625rem;
-  color: #22c55e;
-  background-color: rgba(34, 197, 94, 0.08);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 3px;
-  padding: 3px 8px;
-  font-family: ui-monospace, 'Courier New', monospace;
-  font-weight: 500;
-}
-
-/* ── Left footer ─────────────────────────────────────────────────────────── */
-.lp-left-footer {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  position: relative;
-  z-index: 1;
-  margin-top: auto;
-}
-
-.lp-footer-item {
-  font-size: 0.5625rem;
-  color: #475569;
-  font-family: ui-monospace, 'Courier New', monospace;
-}
-
-.lp-footer-sep {
-  width: 1px;
-  height: 10px;
-  background-color: #1e293b;
-}
-
-/* ── Right panel ─────────────────────────────────────────────────────────── */
-.lp-right {
-  flex: 1;
-  background-color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 2.5rem;
-  overflow-y: auto;
-}
-
-.lp-form {
-  width: 100%;
-  max-width: 440px;
+.lp-exhibit-content {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--lp-space-3);
 }
 
-/* ── Form header ─────────────────────────────────────────────────────────── */
-.lp-form-header {
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 1.25rem;
-}
-
-.lp-form-title {
-  font-size: 1.375rem;
+.lp-exhibit-title {
+  font-size: 1rem;
   font-weight: 700;
-  color: #0f172a;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
-  margin: 0 0 0.25rem;
+  color: var(--lp-ink-white);
+  line-height: 1.3;
 }
 
-.lp-form-subtitle {
+.lp-exhibit-desc {
   font-size: 0.8125rem;
-  color: #64748b;
-  margin: 0;
+  color: var(--lp-ink-muted);
   line-height: 1.5;
 }
 
-/* ── Section ─────────────────────────────────────────────────────────────── */
-.lp-section {
+/* Exhibit Visualizers */
+.lp-visualizer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--lp-space-2);
+  margin-top: var(--lp-space-2);
+}
+
+.lp-grid-cell {
+  background-color: var(--lp-bg-card);
+  border: 1px solid var(--lp-border-dark);
+  border-radius: var(--lp-radius-sm);
+  padding: var(--lp-space-2);
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  align-items: center;
+  gap: var(--lp-space-1);
 }
 
-.lp-section-label {
-  font-size: 0.6875rem;
+.lp-cell-day {
+  font-size: 0.625rem;
   font-weight: 600;
-  color: #374151;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: var(--lp-ink-muted);
 }
 
-/* ── Role cards grid ─────────────────────────────────────────────────────── */
-.lp-role-grid {
+.lp-cell-block {
+  width: 100%;
+  height: 14px;
+  border-radius: 2px;
+  background-color: var(--lp-accent-blue);
+  opacity: 0.85;
+}
+
+.lp-cell-block-lab {
+  background-color: var(--lp-accent-gold);
+}
+
+.lp-cell-block-tut {
+  background-color: var(--lp-accent-emerald);
+}
+
+.lp-exhibit-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--lp-space-4);
+  padding-top: var(--lp-space-4);
+  font-size: 0.6875rem;
+  color: var(--lp-ink-faint);
+  border-top: 1px solid var(--lp-border-dark);
+}
+
+/* ── Right Column (Authentication Console) ───────────────────────────────── */
+.lp-right-column {
+  flex: 1;
+  background-color: var(--lp-surface-right);
+  color: var(--lp-ink-dark);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--lp-space-8) var(--lp-space-10);
+}
+
+@media (max-width: 900px) {
+  .lp-right-column {
+    padding: var(--lp-space-6) var(--lp-space-5);
+  }
+}
+
+.lp-form-box {
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--lp-space-5);
+}
+
+.lp-head-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lp-space-1);
+}
+
+.lp-head-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--lp-ink-dark);
+  line-height: 1.25;
+}
+
+.lp-head-lede {
+  font-size: 0.8125rem;
+  color: var(--lp-ink-dark-muted);
+  line-height: 1.4;
+}
+
+/* ── Role Pass Selector ──────────────────────────────────────────────────── */
+.lp-role-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--lp-space-2);
+}
+
+.lp-role-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--lp-ink-dark);
+}
+
+.lp-role-passes {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--lp-space-2);
 }
 
 .lp-role-card {
-  position: relative;
+  background-color: var(--lp-surface-alt);
+  border: 1px solid var(--lp-border-light);
+  border-radius: var(--lp-radius-md);
+  padding: var(--lp-space-3);
+  text-align: left;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.875rem 0.5rem;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 6px;
-  background-color: #f8fafc;
-  cursor: pointer;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
-  text-align: center;
+  gap: var(--lp-space-1);
+  transition: transform 0.25s var(--lp-ease-out), border-color 0.15s ease, background-color 0.15s ease;
+  position: relative;
 }
 
 .lp-role-card:hover {
-  border-color: #cbd5e1;
-  background-color: #f1f5f9;
-}
-
-.lp-role-card:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+  transform: translateY(-2px);
+  border-color: var(--lp-border-light-focus);
 }
 
 .lp-role-card--active {
-  border-color: #1e3a8a;
-  background-color: #eff6ff;
+  border-color: var(--lp-border-light-focus);
+  background-color: #f0f7ff;
 }
 
-.lp-role-icon {
-  color: #64748b;
+.lp-role-card-top {
   display: flex;
-}
-
-.lp-role-icon--active {
-  color: #1d4ed8;
-}
-
-.lp-role-name {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #0f172a;
-  line-height: 1.2;
-}
-
-.lp-role-sub {
-  font-size: 0.625rem;
-  color: #94a3b8;
-  line-height: 1.3;
-}
-
-.lp-role-check {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  color: #1d4ed8;
-}
-
-/* ── Role description strip ──────────────────────────────────────────────── */
-.lp-role-strip {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  background-color: #fefce8;
-  border: 1px solid #fde68a;
-  border-radius: 5px;
-  padding: 0.5rem 0.75rem;
-}
-
-.lp-strip-icon {
-  color: #d97706;
-  flex-shrink: 0;
-  margin-top: 1px;
-  display: flex;
-}
-
-.lp-strip-text {
-  font-size: 0.75rem;
-  color: #78350f;
-  flex: 1;
-  line-height: 1.45;
-}
-
-.lp-strip-tier {
-  font-size: 0.625rem;
-  color: #d97706;
-  font-weight: 600;
-  white-space: nowrap;
-  font-family: ui-monospace, 'Courier New', monospace;
-  flex-shrink: 0;
-  align-self: flex-start;
-  margin-top: 1px;
-}
-
-/* ── Field label ─────────────────────────────────────────────────────────── */
-.lp-field-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #374151;
-  line-height: 1;
-}
-
-.lp-field-row {
-  display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
 }
 
-.lp-forgot-link {
+.lp-role-card-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--lp-ink-dark);
+}
+
+.lp-role-card-tier {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--lp-ink-dark-faint);
+}
+
+.lp-role-card-sub {
   font-size: 0.6875rem;
-  color: #2563eb;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: none;
+  color: var(--lp-ink-dark-muted);
 }
 
-.lp-forgot-link:hover {
-  text-decoration: underline;
-}
-
-.lp-forgot-link:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
-  border-radius: 2px;
-}
-
-/* ── Input ───────────────────────────────────────────────────────────────── */
-.lp-field-with-icon {
-  position: relative;
+/* ── Selected Role Notice & Demo Fill Strip ──────────────────────────────── */
+.lp-demo-strip {
+  background-color: var(--lp-surface-alt);
+  border: 1px solid var(--lp-border-light);
+  border-radius: var(--lp-radius-md);
+  padding: var(--lp-space-2) var(--lp-space-3);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--lp-space-2);
+  font-size: 0.6875rem;
 }
 
-.lp-field-icon {
-  position: absolute;
-  left: 10px;
-  color: #94a3b8;
+.lp-demo-text {
+  color: var(--lp-ink-dark-muted);
+}
+
+.lp-demo-creds {
+  font-family: var(--lp-font-mono);
+  font-weight: 600;
+  color: var(--lp-ink-dark);
+}
+
+.lp-fill-btn {
+  background-color: var(--lp-surface-right);
+  border: 1px solid var(--lp-border-light);
+  color: var(--lp-accent-blue);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: var(--lp-space-1) var(--lp-space-2);
+  border-radius: var(--lp-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.lp-fill-btn:hover {
+  background-color: #f0f7ff;
+}
+
+/* ── Form Inputs ─────────────────────────────────────────────────────────── */
+.lp-field {
   display: flex;
-  pointer-events: none;
+  flex-direction: column;
+  gap: var(--lp-space-1);
+}
+
+.lp-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--lp-ink-dark);
 }
 
 .lp-input {
   width: 100%;
-  height: 40px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 6px;
+  padding: var(--lp-space-2) var(--lp-space-3);
   font-size: 0.8125rem;
-  color: #0f172a;
-  background-color: #ffffff;
-  padding: 0 2.75rem 0 2rem;
-  font-family: ui-monospace, 'Courier New', monospace;
-  transition: border-color 0.15s ease;
+  background-color: var(--lp-surface-right);
+  border: 1px solid var(--lp-border-light);
+  border-radius: var(--lp-radius-md);
+  color: var(--lp-ink-dark);
+  font-family: var(--lp-font-sans);
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .lp-input:focus {
+  border-color: var(--lp-border-light-focus);
+}
+
+.lp-input:focus-visible {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 2px var(--lp-surface-right), 0 0 0 4px var(--lp-border-light-focus);
 }
 
-.lp-input--readonly {
-  background-color: #f8fafc;
-  color: #64748b;
-  cursor: default;
-}
-
-.lp-field-domain {
-  position: absolute;
-  right: 10px;
-  font-size: 0.625rem;
-  color: #94a3b8;
-  font-family: ui-monospace, 'Courier New', monospace;
-  pointer-events: none;
-}
-
-/* ── Error ───────────────────────────────────────────────────────────────── */
-.lp-error {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 0.875rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 5px;
+/* ── Error Banner ────────────────────────────────────────────────────────── */
+.lp-error-alert {
+  background-color: var(--lp-accent-rose-bg);
+  border: 1px solid var(--lp-accent-rose-border);
+  color: var(--lp-accent-rose);
+  padding: var(--lp-space-2) var(--lp-space-3);
+  border-radius: var(--lp-radius-md);
   font-size: 0.75rem;
-  color: #991b1b;
+  line-height: 1.4;
 }
 
-/* ── Submit button ───────────────────────────────────────────────────────── */
-.lp-submit {
+/* ── Submit Action ───────────────────────────────────────────────────────── */
+.lp-submit-button {
+  background-color: var(--lp-accent-blue);
+  color: var(--lp-ink-white);
+  border: none;
+  border-radius: var(--lp-radius-md);
+  height: 42px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  height: 44px;
-  background-color: #1e3a8a;
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  width: 100%;
+  gap: var(--lp-space-2);
+  transition: background-color 0.15s ease, transform 0.2s var(--lp-ease-out);
+  box-shadow: 0 2px 4px rgba(29, 78, 216, 0.2);
 }
 
-.lp-submit:hover:not(:disabled) {
-  background-color: #1e40af;
+.lp-submit-button:hover:not(:disabled) {
+  background-color: var(--lp-accent-blue-hover);
+  transform: translateY(-1px);
 }
 
-.lp-submit:disabled {
-  opacity: 0.65;
+.lp-submit-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.lp-submit-button:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
-.lp-submit:focus-visible {
+.lp-submit-button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+  box-shadow: 0 0 0 2px var(--lp-surface-right), 0 0 0 4px var(--lp-accent-blue);
 }
 
 .lp-submit-spinner {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #ffffff;
+  border-top-color: var(--lp-ink-white);
   border-radius: 50%;
-  animation: lp-spin 0.7s linear infinite;
-  flex-shrink: 0;
+  animation: momSpin 0.7s linear infinite;
 }
 
-@keyframes lp-spin {
+@keyframes momSpin {
   to { transform: rotate(360deg); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .lp-submit-spinner {
-    animation: none;
-    opacity: 0.5;
-  }
-}
-
-/* ── Form footer note ────────────────────────────────────────────────────── */
-.lp-form-note {
+.lp-form-foot {
   font-size: 0.6875rem;
-  color: #94a3b8;
-  line-height: 1.5;
+  color: var(--lp-ink-dark-faint);
+  line-height: 1.4;
   text-align: center;
-  margin: 0;
 }
 
-/* ── Responsive: stack on narrow screens ─────────────────────────────────── */
-@media (max-width: 860px) {
-  .lp-root {
-    flex-direction: column;
+/* ── Floor 7: prefers-reduced-motion fallback ────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-
-  .lp-left {
-    flex: 0 0 auto;
-    min-height: 220px;
-    padding: 1.5rem;
-  }
-
-  .lp-canvas-area {
-    display: none;
-  }
-
-  .lp-right {
-    padding: 2rem 1.5rem;
-  }
-
-  .lp-role-grid {
-    grid-template-columns: repeat(2, 1fr);
+  .lp-marquee-inner {
+    animation: none !important;
   }
 }
-
